@@ -27,6 +27,10 @@ app.use(cookieParser())
 
 app.use(passport.initialize())
 
+console.log("CLIENT ID:", process.env.GOOGLE_CLIENT_ID);
+console.log("CLIENT SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "Loaded" : "Missing");
+console.log("BACKEND:", process.env.BACKEND_URL);
+
 passport.use(new GoogleStrategy({
     clientID: CONFIG.GOOGLE_CLIENT_ID,
     clientSecret: CONFIG.GOOGLE_CLIENT_SECRET,

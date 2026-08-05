@@ -28,5 +28,5 @@ export const CONFIG = {
     IMAGEKIT_PRIVATE_KEY: process.env.IMAGEKIT_PRIVATE_KEY,
     PORT: process.env.PORT || 5000,
     FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:5173",
-    BACKEND_URL: process.env.BACKEND_URL || "http://localhost:5000"
+    BACKEND_URL: process.env.BACKEND_URL
 }
