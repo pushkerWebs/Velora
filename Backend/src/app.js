@@ -12,13 +12,17 @@ import {CONFIG} from "./config/config.js"
 
 const app = express()
 app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
-    methods:["GET","POST","DELETE","PUT","PATCH"],
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        process.env.FRONTEND_URL
+    ].filter(Boolean),
+    methods: ["GET", "POST", "DELETE", "PUT", "PATCH"],
     credentials: true,
 }))
 app.use(morgan("dev"))
 app.use(express.json())
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
 app.use(passport.initialize())
@@ -26,7 +30,7 @@ app.use(passport.initialize())
 passport.use(new GoogleStrategy({
     clientID: CONFIG.GOOGLE_CLIENT_ID,
     clientSecret: CONFIG.GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost:5173/api/auth/callback"
+    callbackURL: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/auth/callback` : "/api/auth/callback"
 }, (accessToken, refreshToken, profile, done) => {
     return done(null, profile)
 }));

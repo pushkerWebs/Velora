@@ -34,7 +34,7 @@ router.get(
   "/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: CONFIG.NODE_ENV == "development" ? "http://localhost:5173/login" : "/login",
+    failureRedirect: `${CONFIG.FRONTEND_URL || "http://localhost:5173"}/login`,
   }),
   googleCallback,
 );

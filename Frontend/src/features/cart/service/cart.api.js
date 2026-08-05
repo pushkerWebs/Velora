@@ -1,8 +1,9 @@
 import axios from 'axios'
+import { API_URL } from '../../../config/api.config.js'
 
 const cartApiInstance = axios.create({
-    baseURL:'/api/cart',
-    withCredentials:true
+    baseURL: `${API_URL}/api/cart`,
+    withCredentials: true
 })
 
 export const addItem = async ({productId, quantity = 1}) => {

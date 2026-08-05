@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { useAuth } from "../hook/useAuth.js";
 import { motion } from "framer-motion";
+import { API_URL } from "../../../config/api.config.js";
 
 export default function Login() {
   const { handleLogin, loading, error } = useAuth();
@@ -172,7 +173,7 @@ export default function Login() {
             <button
               type="button"
               className="reg-btn-outline"
-              onClick={() => window.location.href = `/api/auth/google?role=${formData.role}`}
+              onClick={() => window.location.href = `${API_URL}/api/auth/google?role=${formData.role}`}
             >
               <svg width="15" height="15" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />

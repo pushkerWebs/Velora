@@ -1,8 +1,9 @@
 import axios from "axios"
+import { API_URL } from "../../../config/api.config.js"
 
 const authApiInstance = axios.create({
-    baseURL:"http://localhost:3000/api/auth",
-    withCredentials:true,
+    baseURL: `${API_URL}/api/auth`,
+    withCredentials: true,
 })
 
 export async function register({fullname,contact,email,password,isSeller}){

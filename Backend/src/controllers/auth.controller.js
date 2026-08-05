@@ -3,12 +3,18 @@ import jwt from 'jsonwebtoken'
 import { CONFIG } from '../config/config.js'
 
 
+const getCookieOptions = () => ({
+    httpOnly: true,
+    secure: CONFIG.NODE_ENV === "production",
+    sameSite: CONFIG.NODE_ENV === "production" ? "none" : "lax",
+})
+
 async function sendTokenResponse(user, res, message) {
     const token = jwt.sign({
         id: user._id,
     }, CONFIG.JWT_SECRET, { expiresIn: "7d" })
 
-    res.cookie("token", token)
+    res.cookie("token", token, getCookieOptions())
 
     res.status(200).json({
         message,
@@ -73,13 +79,14 @@ export const login = async (req, res) => {
 
 
 export const googleCallback = async (req, res) => {
+    const frontendUrl = CONFIG.FRONTEND_URL || "http://localhost:5173"
     try {
         const profile = req.user
         const email = profile.emails?.[0]?.value
         const fullname = profile.displayName || "Google User"
 
         if (!email) {
-            return res.redirect("http://localhost:5173/login?error=no_email")
+            return res.redirect(`${frontendUrl}/login?error=no_email`)
         }
 
         let user = await userModel.findOne({ email })
@@ -97,15 +104,15 @@ export const googleCallback = async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id }, CONFIG.JWT_SECRET, { expiresIn: "7d" })
-        res.cookie("token", token, { httpOnly: true })
+        res.cookie("token", token, getCookieOptions())
         if (user.role === "seller") {
-            res.redirect("http://localhost:5173/seller/dashboard")
+            res.redirect(`${frontendUrl}/seller/dashboard`)
         } else {
-            res.redirect("http://localhost:5173/")
+            res.redirect(`${frontendUrl}/`)
         }
     } catch (error) {
         console.error("Google callback error:", error)
-        res.redirect("http://localhost:5173/login?error=google_failed")
+        res.redirect(`${frontendUrl}/login?error=google_failed`)
     }
 }
 
@@ -126,7 +133,7 @@ export const getMe = async (req, res) => {
 }
 
 export const logout = async (req, res) => {
-    res.clearCookie("token")
+    res.clearCookie("token", getCookieOptions())
     res.status(200).json({
         message: "Logout successful",
         success: true
