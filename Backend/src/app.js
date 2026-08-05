@@ -11,6 +11,8 @@ import {CONFIG} from "./config/config.js"
 
 
 const app = express()
+app.set("trust proxy", 1)
+
 app.use(cors({
     origin: [
         "http://localhost:5173",
@@ -30,7 +32,7 @@ app.use(passport.initialize())
 passport.use(new GoogleStrategy({
     clientID: CONFIG.GOOGLE_CLIENT_ID,
     clientSecret: CONFIG.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/auth/callback` : "/api/auth/callback"
+    callbackURL: `${CONFIG.BACKEND_URL}/api/auth/callback`
 }, (accessToken, refreshToken, profile, done) => {
     return done(null, profile)
 }));
