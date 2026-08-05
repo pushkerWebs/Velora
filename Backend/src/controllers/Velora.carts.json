@@ -1,0 +1,235 @@
+[{
+  "_id": {
+    "$oid": "6a61e46a36ca92ec20c3aaf6"
+  },
+  "totalPrice": 2998,
+  "currency": "INR",
+  "items": [
+    {
+      "product": {
+        "_id": {
+          "$oid": "6a645a1bfdde82905fec7280"
+        },
+        "title": "Straight Loose Fit Washed Jeans",
+        "description": "Washed black denim jeans offer a versatile edge to your everyday rotation. Crafted from premium 100% Cotton, these straight loose-fit jeans provide superior comfort and a relaxed silhouette. The classic five-pocket design and subtle fading make them perfect for pairing with oversized tees or crisp shirts for a modern, effortless look.",
+        "seller": {
+          "$oid": "6a59bec7beacc7412b81a7f9"
+        },
+        "price": {
+          "amount": 1699,
+          "currency": "INR"
+        },
+        "images": [
+          {
+            "url": "https://ik.imagekit.io/q5sm05uvn/snitchjeans1_TCcIS3fMD.webp",
+            "alt": "snitchjeans1.webp",
+            "_id": {
+              "$oid": "6a645a1bfdde82905fec7281"
+            }
+          },
+          {
+            "url": "https://ik.imagekit.io/q5sm05uvn/snitchjeans1.2_JpEjSeY5u.webp",
+            "alt": "snitchjeans1.2.webp",
+            "_id": {
+              "$oid": "6a645a1bfdde82905fec7282"
+            }
+          },
+          {
+            "url": "https://ik.imagekit.io/q5sm05uvn/snitchjeans1.3_agu-uQvb3.webp",
+            "alt": "snitchjeans1.3.webp",
+            "_id": {
+              "$oid": "6a645a1bfdde82905fec7283"
+            }
+          },
+          {
+            "url": "https://ik.imagekit.io/q5sm05uvn/snitch_jeans_1.3_N8C8O4kgP.webp",
+            "alt": "snitch jeans 1.3.webp",
+            "_id": {
+              "$oid": "6a645a1bfdde82905fec7284"
+            }
+          }
+        ],
+        "sizes": [
+          {
+            "_id": {
+              "$oid": "6a645a1bfdde82905fec7285"
+            },
+            "label": "XS",
+            "available": true
+          },
+          {
+            "_id": {
+              "$oid": "6a645a1bfdde82905fec7286"
+            },
+            "label": "S",
+            "available": true
+          },
+          {
+            "_id": {
+              "$oid": "6a645a1bfdde82905fec7287"
+            },
+            "label": "M",
+            "available": true
+          },
+          {
+            "_id": {
+              "$oid": "6a645a1bfdde82905fec7288"
+            },
+            "label": "L",
+            "available": true
+          },
+          {
+            "_id": {
+              "$oid": "6a645a1bfdde82905fec7289"
+            },
+            "label": "XL",
+            "available": true
+          }
+        ],
+        "createdAt": {
+          "$date": "2026-07-25T06:39:23.713Z"
+        },
+        "updatedAt": {
+          "$date": "2026-07-25T06:39:23.713Z"
+        },
+        "__v": 0
+      },
+      "quantity": 1,
+      "price": {
+        "amount": 1699,
+        "currency": "INR"
+      },
+      "_id": {
+        "$oid": "6a6994f518ad48ff6db1abcc"
+      }
+    },
+    {
+      "product": {
+        "_id": {
+          "$oid": "6a676616604929cd5133aa0e"
+        },
+        "title": "Alpha Full Sleeves Boxy Fit T-shirt",
+        "description": "Dark, graphic-heavy, and built to make an impact. The Alpha Full Sleeves T-Shirt features an oversized gothic goat artwork across the back. The relaxed full-sleeve silhouette and high-impact graphics give it a strong underground streetwear feel from every angle.\r\n\r\n",
+        "seller": {
+          "$oid": "6a59bec7beacc7412b81a7f9"
+        },
+        "price": {
+          "amount": 1299,
+          "currency": "INR"
+        },
+        "images": [
+          {
+            "url": "https://ik.imagekit.io/q5sm05uvn/ALPHAFULLSLEEVESWEBSITE2_Mjc5vGR7aw.webp",
+            "alt": "ALPHAFULLSLEEVESWEBSITE2.webp",
+            "_id": {
+              "$oid": "6a676616604929cd5133aa0f"
+            }
+          },
+          {
+            "url": "https://ik.imagekit.io/q5sm05uvn/ALPHAFULLSLEEVESWEBSITE1_gr21X8Zwu.webp",
+            "alt": "ALPHAFULLSLEEVESWEBSITE1.webp",
+            "_id": {
+              "$oid": "6a676616604929cd5133aa10"
+            }
+          },
+          {
+            "url": "https://ik.imagekit.io/q5sm05uvn/ALPHAFULLSLEEVESWEBSITE3_615a5b60-4c9c-4148-bdeb-66805d57e1ad_MURiXxlXu.webp",
+            "alt": "ALPHAFULLSLEEVESWEBSITE3_615a5b60-4c9c-4148-bdeb-66805d57e1ad.webp",
+            "_id": {
+              "$oid": "6a676616604929cd5133aa11"
+            }
+          },
+          {
+            "url": "https://ik.imagekit.io/q5sm05uvn/ALPHAFULLSLEEVESWEBSITE10_eRuK2qgHq.webp",
+            "alt": "ALPHAFULLSLEEVESWEBSITE10.webp",
+            "_id": {
+              "$oid": "6a676616604929cd5133aa12"
+            }
+          }
+        ],
+        "sizes": [
+          {
+            "_id": {
+              "$oid": "6a676616604929cd5133aa13"
+            },
+            "label": "XS",
+            "available": true
+          },
+          {
+            "_id": {
+              "$oid": "6a676616604929cd5133aa14"
+            },
+            "label": "S",
+            "available": true
+          },
+          {
+            "_id": {
+              "$oid": "6a676616604929cd5133aa15"
+            },
+            "label": "M",
+            "available": true
+          },
+          {
+            "_id": {
+              "$oid": "6a676616604929cd5133aa16"
+            },
+            "label": "L",
+            "available": true
+          },
+          {
+            "_id": {
+              "$oid": "6a676616604929cd5133aa17"
+            },
+            "label": "XL",
+            "available": true
+          }
+        ],
+        "createdAt": {
+          "$date": "2026-07-27T14:07:18.471Z"
+        },
+        "updatedAt": {
+          "$date": "2026-07-27T14:07:18.471Z"
+        },
+        "__v": 0
+      },
+      "quantity": 1,
+      "price": {
+        "amount": 1299,
+        "currency": "INR"
+      },
+      "_id": {
+        "$oid": "6a69953518ad48ff6db1acd2"
+      }
+    }
+  ]
+}]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

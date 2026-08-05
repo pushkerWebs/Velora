@@ -1,0 +1,100 @@
+import React, { useState, useEffect, useRef } from "react";
+
+const DEFAULT_FALLBACK =
+  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=600&q=80";
+
+function ProductCardImagePreview({
+  images = [],
+  alt = "Product Image",
+  className = "",
+  aspectRatioClass = "aspect-[3/4]",
+}) {
+  // Extract clean array of image URLs (up to 4 images)
+  const imageList = React.useMemo(() => {
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return [DEFAULT_FALLBACK];
+    }
+    const extracted = images
+      .slice(0, 4)
+      .map((img) => (typeof img === "string" ? img : img?.url))
+      .filter(Boolean);
+
+    return extracted.length > 0 ? extracted : [DEFAULT_FALLBACK];
+  }, [images]);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const intervalRef = useRef(null);
+
+  const totalImages = imageList.length;
+
+  useEffect(() => {
+    // Enable hover slideshow only if device supports mouse hover and product has > 1 image
+    const canHover =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(hover: hover)").matches;
+
+    if (isHovered && canHover && totalImages > 1) {
+      intervalRef.current = setInterval(() => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % totalImages);
+      }, 800); // Switch image every 800ms
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      // Instantly or smoothly reset back to image 0 on mouse leave
+      setCurrentIndex(0);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isHovered, totalImages]);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
+  return (
+    <div
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`relative w-full ${aspectRatioClass} bg-[#f5f5f5] overflow-hidden ${className}`}
+    >
+      {imageList.map((url, idx) => {
+        const isVisible = currentIndex === idx;
+        return (
+          <img
+            key={url + idx}
+            src={url}
+            alt={`${alt} - view ${idx + 1}`}
+            loading={idx === 0 ? "eager" : "lazy"}
+            decoding="async"
+            onError={(e) => {
+              e.target.src = DEFAULT_FALLBACK;
+            }}
+            className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isHovered ? "scale(1.03) translateZ(0)" : "scale(1) translateZ(0)",
+              transition:
+                "opacity 400ms cubic-bezier(0, 0, 0.2, 1), transform 500ms cubic-bezier(0, 0, 0.2, 1)",
+              willChange: "opacity, transform",
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+export default React.memo(ProductCardImagePreview);

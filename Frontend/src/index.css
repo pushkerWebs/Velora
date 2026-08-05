@@ -1,0 +1,466 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bodoni+Moda:ital,opsz,wght@0,6..96,700;0,6..96,900&family=Cinzel:wght@700;900&family=Griffy&family=Inter:wght@300;400;500;600;700&family=Italiana&family=Lilita+One&family=Montserrat:wght@400;500;600;700;800;900&family=Outfit:wght@800;900&family=Permanent+Marker&family=Syne:wght@700;800&display=swap');
+@import "tailwindcss";
+
+/* ─── Lenis Smooth Scroll ─── */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* ─── GPU Acceleration & Rendering Utilities ─── */
+.gpu-accelerated {
+  transform: translate3d(0, 0, 0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+img {
+  content-visibility: auto;
+}
+
+
+/* ─── Scrollbar hide utility ─── */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* ─── Footer Marquee Animation ─── */
+@keyframes footerMarquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-footer-marquee {
+  display: flex;
+  width: max-content;
+  animation: footerMarquee 24s linear infinite;
+}
+
+/* ─── Moving Animated Waves ─── */
+@keyframes waveMoveBack {
+  0% { transform: translateX(0%) scaleY(1); }
+  50% { transform: translateX(-3%) scaleY(1.12); }
+  100% { transform: translateX(3%) scaleY(0.92); }
+}
+
+@keyframes waveMoveMid {
+  0% { transform: translateX(0%) scaleY(1); }
+  50% { transform: translateX(2.5%) scaleY(0.88); }
+  100% { transform: translateX(-2.5%) scaleY(1.15); }
+}
+
+@keyframes waveMoveFront {
+  0% { transform: translateX(0%) scaleY(1); }
+  50% { transform: translateX(-2%) scaleY(1.08); }
+  100% { transform: translateX(2%) scaleY(0.94); }
+}
+
+.animate-wave-back {
+  animation: waveMoveBack 5s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+  will-change: transform;
+}
+
+.animate-wave-mid {
+  animation: waveMoveMid 3.8s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+  will-change: transform;
+}
+
+.animate-wave-front {
+  animation: waveMoveFront 2.8s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+  will-change: transform;
+}
+
+/* ─── Velora nav underline hover ─── */
+.nav-underline {
+  position: relative;
+}
+.nav-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.3s ease;
+}
+.nav-underline:hover::after { width: 100%; }
+
+/* ─── Custom Scrollbar Utility ─── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f4f3f3;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* ─── Reset (scoped to auth pages only to avoid breaking Tailwind) ─── */
+.reg-root *, .reg-root *::before, .reg-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { box-sizing: border-box; }
+.reg-root { overflow: hidden; }
+
+/* ─── Error banner ─── */
+.reg-error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 2px;
+  margin-bottom: 4px;
+}
+
+/* ─── Disabled button ─── */
+.reg-btn-primary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+/* ─── Root layout ─── */
+.reg-root {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: #fff;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ─── LEFT panel ─── */
+.reg-left {
+  display: none; /* hidden on mobile, shown at lg */
+  flex: 0 0 50%;
+  position: relative;
+  overflow: hidden;
+}
+.reg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 20%;
+}
+.reg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.6) 100%);
+}
+.reg-tagline {
+  position: absolute;
+  bottom: 48px;
+  left: 40px;
+  z-index: 10;
+}
+.reg-subtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.reg-headline {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: clamp(34px, 4vw, 58px);
+  color: #fff;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+/* ─── RIGHT panel ─── */
+.reg-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 32px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* hide scrollbar but allow scroll if needed */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: relative;
+}
+.reg-right::-webkit-scrollbar { display: none; }
+
+/* Mobile logo */
+.reg-mobile-logo {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+}
+.reg-logo-text {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 0.28em;
+  color: #1a1a1a;
+  text-transform: uppercase;
+}
+
+/* Form container */
+.reg-form-wrap {
+  width: 100%;
+  max-width: 360px;
+  padding-top: 8px;
+}
+
+/* Heading */
+.reg-heading { margin-bottom: 20px; }
+.reg-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(20px, 2vw, 26px);
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+.reg-sub { font-size: 13px; color: #747878; }
+
+/* Form */
+.reg-form { display: flex; flex-direction: column; gap: 14px; }
+
+/* Field */
+.reg-field { display: flex; flex-direction: column; }
+.reg-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #747878;
+  margin-bottom: 4px;
+}
+.reg-input {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #1a1a1a;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #c4c7c7;
+  border-radius: 0;
+  padding: 5px 0;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.velora-input:focus { border-bottom-color: #1a1a1a !important; outline: none; }
+.velora-input::placeholder { color: #c4c7c7; }
+
+/* Phone row */
+.reg-phone-row { display: flex; align-items: flex-end; }
+.reg-prefix {
+  font-size: 14px;
+  color: #1a1a1a;
+  padding-bottom: 5px;
+  padding-right: 6px;
+  border-bottom: 1px solid #c4c7c7;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* Password row */
+.reg-pw-row { display: flex; align-items: flex-end; gap: 0; position: relative; }
+.reg-toggle {
+  position: absolute;
+  right: 0;
+  bottom: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f59e0b;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+.reg-toggle:hover { color: #d97706; }
+
+/* Buttons */
+.reg-btn-primary {
+  width: 100%;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.2s;
+  margin-top: 4px;
+  font-family: 'Inter', sans-serif;
+}
+.reg-btn-primary:hover { background: #333; }
+.reg-btn-primary:active { transform: scale(0.99); }
+
+.reg-btn-outline {
+  width: 100%;
+  background: transparent;
+  color: #1a1a1a;
+  border: 1px solid #1a1a1a;
+  padding: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+.reg-btn-outline:hover { background: #f5f5f5; }
+
+/* Footer */
+.reg-footer-text { margin-top: 14px; font-size: 13px; color: #747878; text-align: center; }
+.reg-link { color: #f59e0b; font-weight: 600; text-decoration: none; }
+.reg-link:hover { text-decoration: underline; }
+.reg-copy { margin-top: 6px; font-size: 9px; color: #c4c7c7; letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
+
+/* ─── Responsive ─── */
+@media (min-width: 1024px) {
+  .reg-left { display: block; }
+  .reg-mobile-logo { display: none; }
+  .reg-right { padding: 24px 48px; }
+}
+
+@media (max-width: 480px) {
+  .reg-right { padding: 16px 20px; }
+  .reg-form-wrap { padding-top: 50px; }
+}
+
+/* ─── Product Detail — Button fill-from-sides hover animation ─── */
+
+/*
+  HOW IT WORKS:
+  - ::before (left half) and ::after (right half) are positioned absolutely
+    above the button's background (z-index: 1) but below the text (z-index: 2)
+  - At rest both halves are scaleX(0) — invisible
+  - On hover both scale to 1 simultaneously, meeting at center
+  - Text/icon children must have position:relative + z-index:2
+*/
+
+/* ── Add to Cart: black → green ── */
+.btn-cart-fill {
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.32s ease, color 0.32s ease !important;
+}
+.btn-cart-fill::before,
+.btn-cart-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 51%;
+  height: 100%;
+  background: #ffffff;
+  z-index: 1;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.btn-cart-fill::before {
+  left: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.btn-cart-fill::after {
+  right: 0;
+  transform-origin: right center;
+  transform: scaleX(0);
+}
+.btn-cart-fill:hover::before,
+.btn-cart-fill:hover::after {
+  transform: scaleX(1);
+}
+.btn-cart-fill:hover {
+  color: #000000 !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25) !important;
+}
+/* All direct children float above the fill layer */
+.btn-cart-fill > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Buy Now: amber → white ── */
+.btn-buy-fill {
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.32s ease !important;
+}
+.btn-buy-fill::before,
+.btn-buy-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 51%;
+  height: 100%;
+  background: #ffffff;
+  z-index: 1;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.btn-buy-fill::before {
+  left: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.btn-buy-fill::after {
+  right: 0;
+  transform-origin: right center;
+  transform: scaleX(0);
+}
+.btn-buy-fill:hover::before,
+.btn-buy-fill:hover::after {
+  transform: scaleX(1);
+}
+.btn-buy-fill:hover {
+  box-shadow: 0 8px 28px rgba(245, 158, 11, 0.4) !important;
+}
+.btn-buy-fill > * {
+  position: relative;
+  z-index: 2;
+}
+
+

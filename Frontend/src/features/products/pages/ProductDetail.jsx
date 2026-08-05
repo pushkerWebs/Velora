@@ -1,0 +1,624 @@
+import React, { useEffect, useState, useRef } from "react";
+import { useParams, Link, useNavigate } from "react-router";
+import { useSelector } from "react-redux";
+import { useProduct } from "../hook/useProduct.js";
+import { useCart } from "../../cart/hook/useCart.js";
+import { useWishlist } from "../hook/useWishlist.js";
+import RecommendedCarousel from "../components/RecommendedCarousel.jsx";
+
+const ProductDetail = () => {
+  const navigate = useNavigate();
+  const { productId } = useParams();
+  const { handleGetProductById } = useProduct();
+  const { handleAddItem, loading: cartLoading } = useCart();
+  const { toggleWishlist, isWishlisted } = useWishlist();
+  const user = useSelector((state) => state.auth.user);
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [sizeError, setSizeError] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  // Mobile swipe tracking
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  useEffect(() => {
+    const fetchProductDetail = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const productData = await handleGetProductById(productId);
+        setProduct(productData);
+        setCurrentImageIndex(0);
+      } catch (err) {
+        console.error("Error fetching product details:", err);
+        setError(err?.response?.data?.message || "Failed to load product details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (productId) {
+      fetchProductDetail();
+    }
+  }, [productId]);
+
+  const images = product?.images || [];
+  const totalImages = images.length;
+
+  const handlePrevImage = () => {
+    if (totalImages <= 1) return;
+    setCurrentImageIndex((prev) => (prev === 0 ? totalImages - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    if (totalImages <= 1) return;
+    setCurrentImageIndex((prev) => (prev === totalImages - 1 ? 0 : prev + 1));
+  };
+
+  // Keyboard shortcuts for lightbox
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setIsLightboxOpen(false);
+      if (e.key === "ArrowLeft") handlePrevImage();
+      if (e.key === "ArrowRight") handleNextImage();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLightboxOpen, totalImages]);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current - touchEndX.current > 50) {
+      handleNextImage();
+    }
+    if (touchEndX.current - touchStartX.current > 50) {
+      handlePrevImage();
+    }
+  };
+
+  const formatPrice = (priceObj) => {
+    if (!priceObj) return "";
+    const { amount, currency } = priceObj;
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: currency || "INR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const handleAddToCart = async () => {
+    if (!selectedSize && product?.sizes && product.sizes.length > 0) {
+      setSizeError(true);
+      return;
+    }
+    setSizeError(false);
+    try {
+      await handleAddItem({ productId, quantity, productTitle: product?.title });
+    } catch (err) {
+      console.error("Add to cart failed:", err);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (!selectedSize && product?.sizes && product.sizes.length > 0) {
+      setSizeError(true);
+      return;
+    }
+    setSizeError(false);
+    try {
+      await handleAddItem({ productId, quantity, productTitle: product?.title });
+      navigate("/cart");
+    } catch (err) {
+      console.error("Buy now failed:", err);
+    }
+  };
+
+  return (
+    <div
+      className="min-h-screen flex flex-col bg-[#FAF9F6] text-[#1A1A1A] antialiased pt-[70px] overflow-x-hidden"
+      style={{ fontFamily: "'Inter', sans-serif" }}
+    >
+      {/* Main Content Container */}
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-12 py-4 sm:py-8 flex flex-col">
+        {/* Breadcrumb Navigation */}
+        <nav className="flex items-center gap-2 text-[11px] font-semibold text-[#747878] uppercase tracking-[0.12em] mb-6 shrink-0">
+          <Link to="/" className="hover:text-black transition-colors">
+            HOME
+          </Link>
+          <span>/</span>
+          <Link to="/products" className="hover:text-black transition-colors">
+            PRODUCTS
+          </Link>
+          <span>/</span>
+          <span className="text-black line-clamp-1">
+            {product?.title || "DETAILS"}
+          </span>
+        </nav>
+
+        {loading ? (
+          <div className="flex-1 flex flex-col items-center justify-center py-24 gap-3">
+            <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#747878]">
+              Loading product details...
+            </span>
+          </div>
+        ) : error || !product ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-20 max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4 text-red-500">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+            </div>
+            <h2 style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-[20px] font-bold text-black mb-2">
+              {error || "Product Not Found"}
+            </h2>
+            <p className="text-[13px] text-[#747878] mb-6">
+              The product you are looking for might have been removed or is temporarily unavailable.
+            </p>
+            <Link
+              to="/products"
+              className="bg-black text-white text-[11px] font-bold uppercase tracking-[0.12em] px-8 py-3.5 rounded-[6px] hover:bg-[#222] transition-colors"
+            >
+              Back To Shop
+            </Link>
+          </div>
+        ) : (
+          /* Premium E-commerce Grid Layout: Mobile/Tablet Single Column, Desktop 45/55 */
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start w-full">
+            
+            {/* ── LEFT COLUMN (Mobile & Tablet: 100%, Desktop: 45%) ── */}
+            <div className="w-full lg:w-[45%] flex flex-col gap-4 shrink-0">
+              
+              {/* Mobile & Tablet View (< 1024px / lg): Swipeable Main Image Slider + Indicators */}
+              <div className="lg:hidden flex flex-col gap-3">
+                <div
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onClick={() => setIsLightboxOpen(true)}
+                  className="relative aspect-[4/5] w-full max-h-[50vh] bg-white rounded-[12px] border border-black/5 shadow-sm overflow-hidden flex items-center justify-center cursor-zoom-in group"
+                >
+                  {totalImages > 0 ? (
+                    <img
+                      src={images[currentImageIndex]?.url}
+                      alt={product?.title || "Product image"}
+                      loading="eager"
+                      decoding="async"
+                      className="max-h-[50vh] w-full h-full object-contain p-2 select-none gpu-accelerated"
+                      onError={(e) => {
+                        e.target.src =
+                          "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=800&q=80";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[#747878] text-[13px] font-semibold uppercase tracking-[0.1em] bg-[#f9f9f9]">
+                      No Image Available
+                    </div>
+                  )}
+
+                  {totalImages > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md border border-black/5 cursor-pointer z-10 active:scale-90 transition-transform"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md border border-black/5 cursor-pointer z-10 active:scale-90 transition-transform"
+                      >
+                        ›
+                      </button>
+                    </>
+                  )}
+
+                  {totalImages > 0 && (
+                    <div className="absolute bottom-3 right-3 bg-black/75 backdrop-blur-sm text-white text-[11px] font-bold tracking-[0.12em] uppercase px-3 py-1 rounded-[6px] pointer-events-none">
+                      {currentImageIndex + 1} / {totalImages}
+                    </div>
+                  )}
+                </div>
+
+                {/* Mobile Horizontal Thumbnail Strip */}
+                {totalImages > 1 && (
+                  <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+                    {images.map((img, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setCurrentImageIndex(idx)}
+                        className={`relative w-16 aspect-[4/5] shrink-0 rounded-[8px] overflow-hidden border-2 transition-all duration-200 cursor-pointer ${
+                          currentImageIndex === idx
+                            ? "border-black shadow-md scale-105"
+                            : "border-black/10 opacity-60 hover:opacity-100"
+                        }`}
+                      >
+                        <img
+                          src={img.url}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover gpu-accelerated"
+                          onError={(e) => {
+                            e.target.src =
+                              "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=300&q=80";
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop View (>= 1024px / lg): 2-Column Image Grid (Zara / COS style) */}
+              <div className="hidden lg:block">
+                {totalImages > 0 ? (
+                  <div className={`grid ${totalImages === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-3 sm:gap-4`}>
+                    {images.map((img, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          setCurrentImageIndex(idx);
+                          setIsLightboxOpen(true);
+                        }}
+                        className="relative aspect-[3/4] w-full max-h-[70vh] bg-white rounded-[10px] border border-black/5 shadow-sm overflow-hidden flex items-center justify-center group cursor-zoom-in"
+                        title="Click to enlarge"
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.alt || `${product.title} ${idx + 1}`}
+                          className="max-h-[70vh] w-full h-full object-contain p-1.5 transition-transform duration-500 ease-out group-hover:scale-[1.04] select-none"
+                          onError={(e) => {
+                            e.target.src =
+                              "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=800&q=80";
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="aspect-[3/4] w-full max-h-[70vh] bg-white rounded-[10px] border border-black/5 shadow-sm flex items-center justify-center text-[#747878] text-[12px] font-semibold uppercase tracking-[0.1em]">
+                    No Image Available
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* ── RIGHT COLUMN (Mobile/Tablet: 100%, Desktop: 55% - Sticky Purchase Panel) ── */}
+            <div className="w-full lg:w-[55%] flex flex-col gap-6 lg:sticky lg:top-[100px] bg-white lg:bg-transparent p-5 sm:p-6 lg:p-0 rounded-xl border border-black/5 lg:border-none shadow-sm lg:shadow-none">
+              
+              {/* Category Tag & Availability */}
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-bold tracking-[0.2em] text-[#f59e0b] uppercase bg-[#f59e0b]/10 px-3 py-1.5 rounded-[6px]">
+                  ORIGINAL ESSENTIAL
+                </span>
+                {product.sizes && product.sizes.some((s) => s.available) ? (
+                  <span className="text-[12px] text-emerald-600 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    IN STOCK
+                  </span>
+                ) : (
+                  <span className="text-[12px] text-red-500 font-bold uppercase tracking-wider">
+                    OUT OF STOCK
+                  </span>
+                )}
+              </div>
+
+              {/* Product Title & Price */}
+              <div className="flex flex-col gap-2">
+                <h1
+                  style={{ fontFamily: "'Montserrat', sans-serif" }}
+                  className="text-[28px] sm:text-[34px] font-black uppercase text-black leading-tight tracking-tight"
+                >
+                  {product.title}
+                </h1>
+                <div className="text-[26px] sm:text-[30px] font-black text-black">
+                  {formatPrice(product.price)}
+                </div>
+              </div>
+
+              {/* Verified Seller Info snippet */}
+              {product.seller && (
+                <div className="bg-white/80 backdrop-blur-sm border border-black/5 p-4 rounded-[10px] flex items-center justify-between shadow-xs">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] font-bold tracking-[0.14em] text-[#747878] uppercase">
+                      VERIFIED SELLER
+                    </span>
+                    <span className="text-[14px] font-bold text-black">
+                      {product.seller.fullname || product.seller.name || "Velora Official Store"}
+                    </span>
+                  </div>
+                  {product.seller.email && (
+                    <span className="text-[12px] text-[#747878] font-medium hidden sm:inline">
+                      {product.seller.email}
+                    </span>
+                  )}
+                </div>
+              )}
+
+
+              {/* Size Selector */}
+              {(() => {
+                const isJeans = product.category === "Jeans";
+                const JEANS_WAIST_SIZES = ["28", "30", "32", "34"];
+                const APPAREL_SIZES = ["XS", "S", "M", "L", "XL"];
+
+                // For Jeans: use waist sizes; for others: use apparel sizes
+                // Prefer product.sizes if labels match the expected set, otherwise use defaults
+                const jeansSizeLabels = new Set(JEANS_WAIST_SIZES);
+                const apparelSizeLabels = new Set(APPAREL_SIZES);
+
+                let displaySizes;
+                if (isJeans) {
+                  // If product already has jeans sizes use them, else generate defaults
+                  const hasWaistSizes = product.sizes && product.sizes.some(s => jeansSizeLabels.has(s.label));
+                  displaySizes = hasWaistSizes
+                    ? product.sizes.filter(s => jeansSizeLabels.has(s.label))
+                    : JEANS_WAIST_SIZES.map(label => ({ label, available: true }));
+                } else {
+                  const hasApparelSizes = product.sizes && product.sizes.some(s => apparelSizeLabels.has(s.label));
+                  displaySizes = hasApparelSizes
+                    ? product.sizes.filter(s => apparelSizeLabels.has(s.label))
+                    : (product.sizes || APPAREL_SIZES.map(label => ({ label, available: true })));
+                }
+
+                if (!displaySizes || displaySizes.length === 0) return null;
+
+                return (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[12px] font-bold tracking-[0.14em] text-[#747878] uppercase">
+                        {isJeans ? "SELECT WAIST" : "SELECT SIZE"}
+                      </label>
+                      {sizeError && (
+                        <span className="text-[12px] font-bold text-red-500 uppercase tracking-wide animate-pulse">
+                          Please select a size
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-3 flex-wrap">
+                      {displaySizes.map((s) => (
+                        <button
+                          key={s.label}
+                          type="button"
+                          disabled={!s.available}
+                          onClick={() => {
+                            setSelectedSize(s.label);
+                            setSizeError(false);
+                          }}
+                          className={`relative min-w-[48px] h-[48px] px-3.5 rounded-[8px] text-[15px] font-bold uppercase tracking-wide border-2 transition-all duration-200 ease-out cursor-pointer flex items-center justify-center ${
+                            !s.available
+                              ? "border-[#e4e4e7] text-[#c4c7c7] bg-[#f9f9f9] cursor-not-allowed"
+                              : selectedSize === s.label
+                              ? "bg-black text-white border-black shadow-md scale-105"
+                              : "border-[#c4c7c7] text-[#1a1c1c] bg-white hover:border-black hover:scale-105"
+                          }`}
+                        >
+                          {s.label}
+                          {!s.available && (
+                            <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <svg viewBox="0 0 40 40" className="w-full h-full absolute inset-0 opacity-30">
+                                <line x1="4" y1="36" x2="36" y2="4" stroke="#888" strokeWidth="1.5" strokeLinecap="round" />
+                              </svg>
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedSize && (
+                      <p className="text-[12px] text-[#747878]">
+                        {isJeans ? "Selected Waist: " : "Selected Size: "}
+                        <span className="font-bold text-black">{selectedSize}</span>
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
+
+              {/* Quantity Selector */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[12px] font-bold tracking-[0.14em] text-[#747878] uppercase">
+                  QUANTITY
+                </label>
+                <div className="flex items-center w-40 h-[48px] border border-[#c4c7c7] rounded-[8px] bg-white overflow-hidden shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="w-12 h-full flex items-center justify-center text-black hover:bg-gray-100 text-xl font-bold transition-colors cursor-pointer"
+                  >
+                    -
+                  </button>
+                  <span className="flex-1 text-center text-[15px] font-bold text-black select-none">
+                    {quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="w-12 h-full flex items-center justify-center text-black hover:bg-gray-100 text-xl font-bold transition-colors cursor-pointer"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons: Full-width Premium BUY NOW & ADD TO CART (50px min height, 15-16px text) */}
+              <div className="flex flex-col sm:flex-row gap-3.5 pt-2">
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  className="btn-buy-fill flex-1 bg-[#f59e0b] text-black min-h-[44px] text-[13px] font-extrabold uppercase tracking-[0.18em] py-3 px-5 rounded-[8px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-[0.99]"
+                >
+                  <span className="relative z-10">BUY NOW</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={cartLoading}
+                  className="btn-cart-fill flex-1 bg-black text-white min-h-[44px] text-[13px] font-extrabold uppercase tracking-[0.18em] py-3 px-5 rounded-[8px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {cartLoading ? (
+                    <>
+                      <span className="relative z-10 w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span className="relative z-10">ADDING...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 relative z-10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                      </svg>
+                      <span className="relative z-10">ADD TO CART</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => toggleWishlist(product._id, e)}
+                  aria-label="Save to wishlist"
+                  className={`min-h-[44px] px-4 rounded-[8px] border text-[12px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    isWishlisted(product._id)
+                      ? "bg-red-50 text-red-600 border-red-200"
+                      : "bg-white text-black border-black/20 hover:border-black"
+                  }`}
+                >
+                  <svg className={`w-5 h-5 ${isWishlisted(product._id) ? "fill-red-600 text-red-600" : "fill-none text-black"}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                  </svg>
+                  <span>{isWishlisted(product._id) ? "SAVED" : "WISHLIST"}</span>
+                </button>
+              </div>
+
+              {/* Description & Details */}
+              {product.description && (
+                <div className="flex flex-col gap-2 pt-4 border-t border-black/10">
+                  <h3 className="text-[11px] font-bold tracking-[0.14em] text-[#747878] uppercase">
+                    DESCRIPTION & FIT
+                  </h3>
+                  <p className="text-[13px] sm:text-[14px] text-[#444748] leading-relaxed font-light whitespace-pre-line">
+                    {product.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Guarantees & Perks */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-4 border-t border-black/10 text-[12px] text-[#444748]">
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-black shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0C2.678 5.578 2.25 6.058 2.25 6.626v.958" />
+                  </svg>
+                  <span className="font-medium">Free Expedited Shipping</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-black shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  </svg>
+                  <span className="font-medium">14-Day Easy Returns</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* Recommended Carousel Component */}
+        <RecommendedCarousel
+          title="YOU MIGHT ALSO LOVE"
+          subtitle="CURATED SELECTION"
+          excludeIds={[product?._id]}
+          limit={4}
+        />
+      </main>
+
+      {/* ── FULLSCREEN LIGHTBOX MODAL FOR IMAGE ENLARGEMENT ── */}
+      {isLightboxOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 transition-all duration-300 select-none"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          {/* Close Button */}
+          <button
+            onClick={() => setIsLightboxOpen(false)}
+            aria-label="Close enlarged view"
+            className="absolute top-6 right-6 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-2xl font-light transition-colors cursor-pointer z-20"
+          >
+            ✕
+          </button>
+
+          {/* Previous Image Arrow */}
+          {totalImages > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevImage();
+              }}
+              aria-label="Previous image"
+              className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-2xl transition-colors cursor-pointer z-20"
+            >
+              ‹
+            </button>
+          )}
+
+          {/* Enlarged Image Container */}
+          <div
+            className="relative max-w-[90vw] max-h-[85vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={images[currentImageIndex]?.url}
+              alt={images[currentImageIndex]?.alt || product?.title}
+              className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
+              onError={(e) => {
+                e.target.src =
+                  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=80";
+              }}
+            />
+          </div>
+
+          {/* Next Image Arrow */}
+          {totalImages > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNextImage();
+              }}
+              aria-label="Next image"
+              className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-2xl transition-colors cursor-pointer z-20"
+            >
+              ›
+            </button>
+          )}
+
+          {/* Image Counter Badge */}
+          {totalImages > 0 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/15 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold px-4 py-2 rounded-full tracking-[0.18em] uppercase">
+              {currentImageIndex + 1} / {totalImages}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ProductDetail;
