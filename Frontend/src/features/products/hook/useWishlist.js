@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { toggleWishlistApi } from "../../auth/services/auth.api";
+import { setUser } from "../../auth/state/auth.slice";
 
 export function useWishlist() {
+  const dispatch = useDispatch();
   const user = useSelector((state) => state.auth?.user);
 
   const [wishlistIds, setWishlistIds] = useState(() => {
@@ -19,6 +21,7 @@ export function useWishlist() {
     }
   });
 
+  // Sync wishlistIds whenever Redux user updates
   useEffect(() => {
     if (user && Array.isArray(user.wishlist)) {
       const ids = user.wishlist.map((id) => (typeof id === "object" ? id._id || id.id : id));
@@ -27,6 +30,7 @@ export function useWishlist() {
     }
   }, [user]);
 
+  // Sync state across window tabs / components
   useEffect(() => {
     const handleStorageChange = () => {
       try {
@@ -56,6 +60,8 @@ export function useWishlist() {
           const updated = res.wishlist.map((id) => (typeof id === "object" ? id._id || id.id : id));
           localStorage.setItem("velora_wishlist_ids", JSON.stringify(updated));
           setWishlistIds(updated);
+          // Keep Redux auth.user in sync so useEffect doesn't overwrite with stale user state!
+          dispatch(setUser({ ...user, wishlist: res.wishlist }));
           window.dispatchEvent(new Event("wishlist-updated"));
           return;
         }
@@ -86,6 +92,9 @@ export function useWishlist() {
     try {
       localStorage.removeItem("velora_wishlist_ids");
       setWishlistIds([]);
+      if (user) {
+        dispatch(setUser({ ...user, wishlist: [] }));
+      }
       window.dispatchEvent(new Event("wishlist-updated"));
     } catch (e) {
       console.error(e);
