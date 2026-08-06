@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useParams, Link, useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import { useProduct } from "../hook/useProduct.js";
 import { useCart } from "../../cart/hook/useCart.js";
 import { useWishlist } from "../hook/useWishlist.js";
 import RecommendedCarousel from "../components/RecommendedCarousel.jsx";
+import ProductReviews from "../components/ProductReviews.jsx";
 
 const ProductDetail = () => {
   const navigate = useNavigate();
@@ -180,10 +182,10 @@ const ProductDetail = () => {
         ) : (
           /* Premium E-commerce Grid Layout: Mobile/Tablet Single Column, Desktop 45/55 */
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start w-full">
-            
+
             {/* ── LEFT COLUMN (Mobile & Tablet: 100%, Desktop: 45%) ── */}
             <div className="w-full lg:w-[45%] flex flex-col gap-4 shrink-0">
-              
+
               {/* Mobile & Tablet View (< 1024px / lg): Swipeable Main Image Slider + Indicators */}
               <div className="lg:hidden flex flex-col gap-3">
                 <div
@@ -216,16 +218,22 @@ const ProductDetail = () => {
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
-                        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md border border-black/5 cursor-pointer z-10 active:scale-90 transition-transform"
+                        aria-label="Previous image"
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md border border-black/10 cursor-pointer z-10 hover:bg-black hover:text-white transition-all active:scale-90"
                       >
-                        ‹
+                        <svg className="w-4 h-4 stroke-current" fill="none" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
                       </button>
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md border border-black/5 cursor-pointer z-10 active:scale-90 transition-transform"
+                        aria-label="Next image"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md border border-black/10 cursor-pointer z-10 hover:bg-black hover:text-white transition-all active:scale-90"
                       >
-                        ›
+                        <svg className="w-4 h-4 stroke-current" fill="none" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
                       </button>
                     </>
                   )}
@@ -245,11 +253,10 @@ const ProductDetail = () => {
                         key={idx}
                         type="button"
                         onClick={() => setCurrentImageIndex(idx)}
-                        className={`relative w-16 aspect-[4/5] shrink-0 rounded-[8px] overflow-hidden border-2 transition-all duration-200 cursor-pointer ${
-                          currentImageIndex === idx
+                        className={`relative w-16 aspect-[4/5] shrink-0 rounded-[8px] overflow-hidden border-2 transition-all duration-200 cursor-pointer ${currentImageIndex === idx
                             ? "border-black shadow-md scale-105"
                             : "border-black/10 opacity-60 hover:opacity-100"
-                        }`}
+                          }`}
                       >
                         <img
                           src={img.url}
@@ -305,7 +312,7 @@ const ProductDetail = () => {
 
             {/* ── RIGHT COLUMN (Mobile/Tablet: 100%, Desktop: 55% - Sticky Purchase Panel) ── */}
             <div className="w-full lg:w-[55%] flex flex-col gap-6 lg:sticky lg:top-[100px] bg-white lg:bg-transparent p-5 sm:p-6 lg:p-0 rounded-xl border border-black/5 lg:border-none shadow-sm lg:shadow-none">
-              
+
               {/* Category Tag & Availability */}
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[11px] font-bold tracking-[0.2em] text-[#f59e0b] uppercase bg-[#f59e0b]/10 px-3 py-1.5 rounded-[6px]">
@@ -405,13 +412,12 @@ const ProductDetail = () => {
                             setSelectedSize(s.label);
                             setSizeError(false);
                           }}
-                          className={`relative min-w-[48px] h-[48px] px-3.5 rounded-[8px] text-[15px] font-bold uppercase tracking-wide border-2 transition-all duration-200 ease-out cursor-pointer flex items-center justify-center ${
-                            !s.available
+                          className={`relative min-w-[48px] h-[48px] px-3.5 rounded-[8px] text-[15px] font-bold uppercase tracking-wide border-2 transition-all duration-200 ease-out cursor-pointer flex items-center justify-center ${!s.available
                               ? "border-[#e4e4e7] text-[#c4c7c7] bg-[#f9f9f9] cursor-not-allowed"
                               : selectedSize === s.label
-                              ? "bg-black text-white border-black shadow-md scale-105"
-                              : "border-[#c4c7c7] text-[#1a1c1c] bg-white hover:border-black hover:scale-105"
-                          }`}
+                                ? "bg-black text-white border-black shadow-md scale-105"
+                                : "border-[#c4c7c7] text-[#1a1c1c] bg-white hover:border-black hover:scale-105"
+                            }`}
                         >
                           {s.label}
                           {!s.available && (
@@ -496,11 +502,10 @@ const ProductDetail = () => {
                   type="button"
                   onClick={(e) => toggleWishlist(product._id, e)}
                   aria-label="Save to wishlist"
-                  className={`min-h-[44px] px-4 rounded-[8px] border text-[12px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                    isWishlisted(product._id)
+                  className={`min-h-[44px] px-4 rounded-[8px] border text-[12px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${isWishlisted(product._id)
                       ? "bg-red-50 text-red-600 border-red-200"
                       : "bg-white text-black border-black/20 hover:border-black"
-                  }`}
+                    }`}
                 >
                   <svg className={`w-5 h-5 ${isWishlisted(product._id) ? "fill-red-600 text-red-600" : "fill-none text-black"}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
@@ -541,6 +546,9 @@ const ProductDetail = () => {
           </div>
         )}
 
+        {/* Product Reviews Section */}
+        <ProductReviews productId={productId} user={user} />
+
         {/* Recommended Carousel Component */}
         <RecommendedCarousel
           title="YOU MIGHT ALSO LOVE"
@@ -550,73 +558,91 @@ const ProductDetail = () => {
         />
       </main>
 
-      {/* ── FULLSCREEN LIGHTBOX MODAL FOR IMAGE ENLARGEMENT ── */}
-      {isLightboxOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 transition-all duration-300 select-none"
-          onClick={() => setIsLightboxOpen(false)}
-        >
-          {/* Close Button */}
-          <button
-            onClick={() => setIsLightboxOpen(false)}
-            aria-label="Close enlarged view"
-            className="absolute top-6 right-6 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-2xl font-light transition-colors cursor-pointer z-20"
-          >
-            ✕
-          </button>
-
-          {/* Previous Image Arrow */}
-          {totalImages > 1 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrevImage();
-              }}
-              aria-label="Previous image"
-              className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-2xl transition-colors cursor-pointer z-20"
-            >
-              ‹
-            </button>
-          )}
-
-          {/* Enlarged Image Container */}
+      {/* ── FULLSCREEN LIGHTBOX MODAL FOR IMAGE ENLARGEMENT (PORTAL TO DOCUMENT.BODY) ── */}
+      {isLightboxOpen &&
+        createPortal(
           <div
-            className="relative max-w-[90vw] max-h-[85vh] flex items-center justify-center"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 sm:p-8 transition-all duration-300 select-none"
+            onClick={() => setIsLightboxOpen(false)}
           >
-            <img
-              src={images[currentImageIndex]?.url}
-              alt={images[currentImageIndex]?.alt || product?.title}
-              className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
-              onError={(e) => {
-                e.target.src =
-                  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=80";
-              }}
-            />
-          </div>
-
-          {/* Next Image Arrow */}
-          {totalImages > 1 && (
+            {/* Close Button */}
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNextImage();
-              }}
-              aria-label="Next image"
-              className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-2xl transition-colors cursor-pointer z-20"
+              onClick={() => setIsLightboxOpen(false)}
+              aria-label="Close enlarged view"
+              className="absolute top-6 right-6 sm:top-8 sm:right-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all duration-300 cursor-pointer z-30 shadow-2xl border border-white/20 hover:border-white hover:scale-110 active:scale-95 group"
             >
-              ›
+              <svg className="w-5 h-5 stroke-current transition-transform duration-200 group-hover:rotate-90" fill="none" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-          )}
 
-          {/* Image Counter Badge */}
-          {totalImages > 0 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/15 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold px-4 py-2 rounded-full tracking-[0.18em] uppercase">
-              {currentImageIndex + 1} / {totalImages}
+            {/* Previous Image Arrow */}
+            {totalImages > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevImage();
+                }}
+                aria-label="Previous image"
+                className="absolute left-4 sm:left-8 lg:left-12 top-1/2 -translate-y-1/2 w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-white/10 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all duration-300 cursor-pointer z-30 shadow-2xl border border-white/20 hover:border-white hover:scale-110 active:scale-95 group"
+              >
+                <svg
+                  className="w-6 h-6 stroke-current transition-transform duration-200 group-hover:-translate-x-0.5"
+                  fill="none"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+            )}
+
+            {/* Enlarged Image Container (Crisp White Card Backdrop for High Contrast) */}
+            <div
+              className="relative max-w-[92vw] max-h-[85vh] bg-white rounded-2xl border border-white/20 p-2 sm:p-4 shadow-2xl flex items-center justify-center overflow-hidden z-20"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={images[currentImageIndex]?.url}
+                alt={images[currentImageIndex]?.alt || product?.title}
+                className="max-w-[85vw] max-h-[78vh] w-auto h-auto object-contain rounded-xl select-none"
+                onError={(e) => {
+                  e.target.src =
+                    "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=80";
+                }}
+              />
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Next Image Arrow */}
+            {totalImages > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextImage();
+                }}
+                aria-label="Next image"
+                className="absolute right-4 sm:right-8 lg:right-12 top-1/2 -translate-y-1/2 w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-white/10 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all duration-300 cursor-pointer z-30 shadow-2xl border border-white/20 hover:border-white hover:scale-110 active:scale-95 group"
+              >
+                <svg
+                  className="w-6 h-6 stroke-current transition-transform duration-200 group-hover:translate-x-0.5"
+                  fill="none"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            )}
+
+            {/* Image Counter Badge */}
+            {totalImages > 0 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md border border-white/20 text-white/90 text-[11px] font-extrabold px-5 py-2 rounded-full tracking-[0.25em] uppercase shadow-xl z-30 select-none">
+                {currentImageIndex + 1} / {totalImages}
+              </div>
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

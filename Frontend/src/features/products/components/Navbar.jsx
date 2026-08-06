@@ -70,6 +70,7 @@ export default function Navbar({ user: userProp }) {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const searchInputRef = useRef(null);
+  const drawerSearchRef = useRef(null);
   const location = useLocation();
 
   const { handleLogout } = useAuth();
@@ -88,10 +89,18 @@ export default function Navbar({ user: userProp }) {
     }
   }, [searchParams]);
 
-  // Focus search input when opened
+  // Focus desktop search input when opened
   useEffect(() => {
     if (searchOpen && searchInputRef.current) {
       searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
+
+  // Focus mobile search input when morphed
+  const mobileSearchRef = useRef(null);
+  useEffect(() => {
+    if (searchOpen && mobileSearchRef.current) {
+      mobileSearchRef.current.focus();
     }
   }, [searchOpen]);
 
@@ -187,9 +196,44 @@ export default function Navbar({ user: userProp }) {
         className={`fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md transition-all duration-300 ${showBorder ? "border-b border-[#e5e7eb] shadow-[0_1px_3px_rgba(0,0,0,0.04)]" : "border-b border-transparent shadow-none"
           }`}
       >
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-12 flex items-center justify-between h-[60px]">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between h-[60px] relative">
 
-          {/* ── Left Nav ── */}
+          {/* ────────────────────────────────────────────────────────
+              MOBILE: Navbar morphs into search bar when searchOpen
+          ─────────────────────────────────────────────────────────── */}
+          {searchOpen && (
+            <div className="lg:hidden absolute inset-0 flex items-center px-3 bg-white/95 backdrop-blur-md z-10"
+              style={{ animation: 'fadeIn 0.15s ease-out' }}
+            >
+              <div className="flex-1 flex items-center gap-2 bg-[#f5f5f5] border border-[#e0e0e0] rounded-full px-4 h-10">
+                <div className="text-[#999] shrink-0"><SearchIcon /></div>
+                <input
+                  ref={mobileSearchRef}
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="flex-1 bg-transparent text-[13px] text-[#111] placeholder-[#999] focus:outline-none"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => handleSearchChange('')}
+                    className="text-[#aaa] hover:text-[#111] text-xs cursor-pointer transition-colors shrink-0"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => { handleSearchChange(''); setSearchOpen(false); }}
+                className="ml-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[#555] hover:text-[#111] cursor-pointer whitespace-nowrap transition-colors shrink-0"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {/* ── Left Nav (desktop only) ── */}
           <nav className="hidden lg:flex items-center gap-8">
             {leftLinks.map((l) => (
               <NavLink key={l.label} to={l.to} scrolled={true}>
@@ -198,10 +242,10 @@ export default function Navbar({ user: userProp }) {
             ))}
           </nav>
 
-          {/* ── Center Logo (Left-aligned flex on mobile, absolutely centered on desktop) ── */}
+          {/* ── Center Logo ── */}
           <Link
             to="/"
-            className="static lg:absolute lg:left-1/2 lg:-translate-x-1/2 flex items-center select-none shrink-0 group"
+            className={`static lg:absolute lg:left-1/2 lg:-translate-x-1/2 flex items-center select-none shrink-0 group transition-opacity duration-200 ${searchOpen ? 'opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto' : 'opacity-100'}`}
           >
             <img
               src="/veloralogobgremoved.png"
@@ -210,7 +254,7 @@ export default function Navbar({ user: userProp }) {
             />
           </Link>
 
-          {/* ── Right Icons (with Small Compact Search Bar) ── */}
+          {/* ── Right Icons (desktop) ── */}
           <div className="hidden lg:flex items-center gap-4 ml-auto">
 
             {/* Small Compact Search Input */}
@@ -316,8 +360,8 @@ export default function Navbar({ user: userProp }) {
             </Link>
           </div>
 
-          {/* ── Mobile Right Action Icons (Hamburger, Search, Cart) ── */}
-          <div className="lg:hidden ml-auto flex items-center gap-1">
+          {/* ── Mobile Right Action Icons ── */}
+          <div className={`lg:hidden ml-auto flex items-center gap-1 transition-opacity duration-200 ${searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
               aria-label="Search"
               onClick={() => setSearchOpen(true)}
@@ -348,6 +392,7 @@ export default function Navbar({ user: userProp }) {
         </div>
       </header>
 
+
       {/* ── Mobile Drawer ── */}
       {mobileOpen && (
         <div className="fixed inset-0 z-[100] flex">
@@ -374,15 +419,25 @@ export default function Navbar({ user: userProp }) {
               VELORA
             </Link>
 
-            {/* Mobile Compact Search Input */}
-            <div className="relative flex items-center mb-6">
+            {/* Mobile Search Input */}
+            <div className="relative flex items-center gap-2 bg-[#f5f5f5] border border-[#e0e0e0] rounded-full px-4 py-2.5 mb-6">
+              <div className="text-[#888] shrink-0"><SearchIcon /></div>
               <input
+                ref={drawerSearchRef}
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full bg-[#f5f5f5] border border-[#e0e0e0] text-[12px] px-4 py-2.5 rounded-full text-[#111] focus:outline-none"
+                className="flex-1 bg-transparent text-[12px] text-[#111] placeholder-[#888] focus:outline-none"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearchChange('')}
+                  className="text-[#888] hover:text-[#111] text-xs cursor-pointer transition-colors"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
             <nav className="flex flex-col gap-6 mb-10">

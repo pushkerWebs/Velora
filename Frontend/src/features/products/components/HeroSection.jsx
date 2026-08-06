@@ -18,7 +18,7 @@ export default function HeroSection() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.3, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
         aria-hidden="true"
-        className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden z-0 gpu-accelerated"
+        className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden z-0 gpu-accelerated -translate-y-24 sm:translate-y-0"
       >
         <span
           style={{
@@ -46,7 +46,7 @@ export default function HeroSection() {
           src={HERO_IMG}
           alt="VELORA Editorial Collection"
           draggable={false}
-          className="w-auto h-[88vh] max-h-[840px] object-contain object-bottom mx-auto pointer-events-none select-none translate-y-8"
+          className="w-auto h-[88vh] max-h-[840px] object-contain object-bottom mx-auto pointer-events-none select-none -translate-y-16 sm:translate-y-8"
           fetchPriority="high"
           loading="eager"
           decoding="async"
@@ -82,7 +82,7 @@ export default function HeroSection() {
         initial={{ opacity: 0, x: 16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.9, delay: 0.85, ease: "easeOut" }}
-        className="absolute bottom-8 sm:bottom-[85px] lg:bottom-[105px] right-6 sm:right-10 lg:right-16 text-right z-10 gpu-accelerated"
+        className="absolute bottom-16 xs:bottom-20 sm:bottom-[85px] lg:bottom-[105px] right-6 sm:right-10 lg:right-16 text-right z-10 gpu-accelerated"
       >
         <div
           style={{ fontFamily: "'Montserrat', sans-serif" }}
@@ -104,7 +104,7 @@ export default function HeroSection() {
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.85, delay: 0.95, ease: "easeOut" }}
-        className="absolute bottom-6 sm:bottom-10 lg:bottom-14 left-5 sm:left-8 lg:left-14 z-20 flex flex-col sm:flex-row gap-2.5 sm:gap-3 gpu-accelerated"
+        className="absolute bottom-16 xs:bottom-20 sm:bottom-10 lg:bottom-14 left-5 sm:left-8 lg:left-14 z-20 flex flex-col sm:flex-row gap-2.5 sm:gap-3 gpu-accelerated"
       >
         {/* Primary — Shop Now */}
         <Link

@@ -102,56 +102,40 @@ export default function CategoryPage({ category }) {
   useEffect(() => {
     window.scrollTo(0, 0);
     setActiveChip("All");
-    (async () => {
-      try {
-        setLoading(true);
-        await handleGetAllProducts();
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    })();
   }, [category]);
 
-  // Prefer the saved product category. For legacy products without one, use
-  // the title only—descriptions often mention other product types.
-  const categoryProducts = allProducts.filter((product) => {
-    const savedCategory = (product.category || "").trim().toLowerCase();
-    const title = (product.title || "").toLowerCase();
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchCategoryProducts = async () => {
+      try {
+        setLoading(true);
+        const params = { category };
+        if (activeChip !== "All") {
+          params.search = activeChip;
+        }
+        await handleGetAllProducts(params, { signal: controller.signal });
+      } catch (e) {
+        if (e.name !== 'CanceledError' && e.code !== 'ERR_CANCELED') {
+          console.error("Failed to load category products:", e);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+    fetchCategoryProducts();
 
-    const titleCategory = /\b(jeans?|denim)\b/.test(title)
-      ? "Jeans"
-      : /\b(t[ -]?shirts?|tees?)\b/.test(title)
-      ? "T-Shirts"
-      : /\bshirts?\b/.test(title)
-      ? "Shirts"
-      : null;
+    return () => {
+      controller.abort();
+    };
+  }, [category, activeChip]);
 
-    const resolvedCategory = titleCategory || {
-      jeans: "Jeans",
-      denim: "Jeans",
-      "t-shirt": "T-Shirts",
-      "t-shirts": "T-Shirts",
-      tshirt: "T-Shirts",
-      tshirts: "T-Shirts",
-      shirt: "Shirts",
-      shirts: "Shirts",
-    }[savedCategory];
-
-    return resolvedCategory === category;
-  });
+  const categoryProducts = allProducts;
   const goTo = (id) => navigate(`/product/${id}`);
 
   const editorPicks = categoryProducts.slice(0, 3);
-
-  // Chip filtering
-  const filteredProducts = (activeChip !== "All")
-    ? categoryProducts.filter((p) => {
-        const hay = ((p.title || "") + " " + (p.description || "")).toLowerCase();
-        return hay.includes(activeChip.toLowerCase());
-      })
-    : categoryProducts;
+  const filteredProducts = categoryProducts;
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#111] antialiased overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>

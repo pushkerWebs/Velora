@@ -463,4 +463,7 @@ html { box-sizing: border-box; }
   z-index: 2;
 }
 
-
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

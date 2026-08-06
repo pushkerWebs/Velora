@@ -66,7 +66,7 @@ const ProductCard = React.memo(function ProductCard({ product, onClick }) {
     >
       {/* ── Image Container (Aspect 3:4) ── */}
       <div className="relative w-full aspect-[3/4] bg-[#f3f3f3] rounded-[16px] overflow-hidden mb-3.5">
-        
+
         {/* Wishlist Heart Button */}
         <button
           onClick={(e) => toggleWishlist(product._id, e)}
@@ -74,9 +74,8 @@ const ProductCard = React.memo(function ProductCard({ product, onClick }) {
           className="absolute top-3.5 right-3.5 z-10 p-2.5 bg-white/80 backdrop-blur-md rounded-full text-[#111] shadow-sm transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
         >
           <svg
-            className={`w-4 h-4 transition-colors duration-200 ${
-              isLiked ? "fill-red-500 stroke-red-500" : "fill-none stroke-[#111]"
-            }`}
+            className={`w-4 h-4 transition-colors duration-200 ${isLiked ? "fill-red-500 stroke-red-500" : "fill-none stroke-[#111]"
+              }`}
             strokeWidth={1.8}
             viewBox="0 0 24 24"
           >
@@ -139,60 +138,38 @@ export default function ProductGrid() {
   const [gridCols, setGridCols] = useState(4);
 
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        setLoading(true);
-        await handleGetAllProducts();
-      } catch (err) {
-        console.error("Failed to load products:", err);
-      } finally {
-        setLoading(false);
-      }
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      const fetchProducts = async () => {
+        try {
+          setLoading(true);
+          const params = {};
+          if (searchQuery.trim()) params.search = searchQuery.trim();
+          if (categoryFilter && categoryFilter !== "All") params.category = categoryFilter;
+
+          await handleGetAllProducts(params, { signal: controller.signal });
+        } catch (err) {
+          if (err.name !== 'CanceledError' && err.code !== 'ERR_CANCELED') {
+            console.error("Failed to load products:", err);
+          }
+        } finally {
+          if (!controller.signal.aborted) {
+            setLoading(false);
+          }
+        }
+      };
+      fetchProducts();
+    }, searchQuery.trim() ? 300 : 0);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
     };
-    fetch();
-  }, []);
+  }, [searchQuery, categoryFilter]);
 
-  // Filter Logic
-  const filtered = useMemo(() => {
-    return products.filter((p) => {
-      const query = searchQuery.trim().toLowerCase();
-      const matchesSearch =
-        !query ||
-        (p.title || "").toLowerCase().includes(query) ||
-        (p.description || "").toLowerCase().includes(query) ||
-        (p.category || "").toLowerCase().includes(query);
-
-      if (!matchesSearch) return false;
-
-      if (categoryFilter !== "All") {
-        const catLower = (p.category || "").toLowerCase().trim();
-        const titleLower = (p.title || "").toLowerCase();
-        const descLower = (p.description || "").toLowerCase();
-        const fullText = `${titleLower} ${descLower} ${catLower}`;
-
-        if (categoryFilter === "Full Sleeve") {
-          // Strictly match ONLY "full sleeve" or "full sleeves" or "full-sleeve"
-          return fullText.includes("full sleeve") || fullText.includes("full sleeves") || fullText.includes("full-sleeve");
-        }
-
-        if (categoryFilter === "Boxy Fit") {
-          // Strictly match ONLY "boxy"
-          return fullText.includes("boxy");
-        }
-
-        if (categoryFilter === "Linen") {
-          // Strictly match ONLY "linen"
-          return fullText.includes("linen");
-        }
-      }
-
-      return true;
-    });
-  }, [products, searchQuery, categoryFilter]);
-
-  // Sort Logic
+  // Sort Logic (Directly sort backend-returned products)
   const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
+    return [...products].sort((a, b) => {
       const aPrice = typeof a.price === "object" ? a.price?.amount || 0 : a.price || 0;
       const bPrice = typeof b.price === "object" ? b.price?.amount || 0 : b.price || 0;
 
@@ -202,7 +179,7 @@ export default function ProductGrid() {
       if (sortBy === "title-az") return (a.title || "").localeCompare(b.title || "");
       return 0;
     });
-  }, [filtered, sortBy]);
+  }, [products, sortBy]);
 
   const handleCategoryChange = (cat) => {
     const newParams = new URLSearchParams(searchParams);
@@ -216,7 +193,7 @@ export default function ProductGrid() {
 
   return (
     <section className="bg-[#f9f9f9] min-h-screen pb-24 select-none">
-      
+
       {/* ── HERO SECTION (Large Screen Expanded Height) ── */}
       <section className="relative w-full h-[380px] xs:h-[440px] sm:h-[60vh] lg:h-[85vh] xl:h-[90vh] lg:max-h-[800px] flex items-center justify-center overflow-hidden mb-4">
         <div className="absolute inset-0 z-0 bg-[#0d0d0d]">
@@ -240,7 +217,7 @@ export default function ProductGrid() {
             className="text-[28px] xs:text-[40px] md:text-[56px] lg:text-[68px] font-bold text-white uppercase tracking-tight mb-3 drop-shadow-md"
             style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
-            {searchQuery ? `"${searchQuery}"` : categoryFilter !== "All" ? categoryFilter : "THE FULL COLLECTION"}
+            {searchQuery ? searchQuery : categoryFilter !== "All" ? categoryFilter : "THE FULL COLLECTION"}
           </h1>
 
           <p
@@ -255,7 +232,7 @@ export default function ProductGrid() {
       {/* ── STITCH FILTER & CATEGORY CHIPS BAR (Responsive Mobile Fit) ── */}
       <section className="bg-[#f9f9f9] border-b border-[#e2e2e2] py-4 px-3 sm:px-8 lg:px-12 mb-8">
         <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          
+
           {/* Category Chips Bar */}
           <div className="w-full md:w-auto overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
             <div className="flex items-center gap-2 sm:gap-2.5 whitespace-nowrap pb-1 md:pb-0">
@@ -265,11 +242,10 @@ export default function ProductGrid() {
                   <button
                     key={cat}
                     onClick={() => handleCategoryChange(cat)}
-                    className={`px-3.5 xs:px-4 sm:px-5 py-1.5 sm:py-2 rounded-full border text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer shrink-0 ${
-                      isActive
+                    className={`px-3.5 xs:px-4 sm:px-5 py-1.5 sm:py-2 rounded-full border text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer shrink-0 ${isActive
                         ? "border-[#111111] bg-[#111111] text-white"
                         : "border-[#111111] bg-transparent text-[#111111] hover:bg-[#dfe0e0]"
-                    }`}
+                      }`}
                     style={{ fontFamily: "'Montserrat', sans-serif" }}
                   >
                     {cat}
@@ -281,7 +257,7 @@ export default function ProductGrid() {
 
           {/* Sort Dropdown & View Controls */}
           <div className="w-full md:w-auto flex items-center justify-between md:justify-end gap-4">
-            
+
             {sortBy !== "default" && (
               <button
                 onClick={() => setSortBy("default")}
@@ -323,11 +299,10 @@ export default function ProductGrid() {
               <button
                 onClick={() => setGridCols(2)}
                 title="Large Editorial View (2 Columns)"
-                className={`p-2 rounded-full transition-all cursor-pointer flex items-center justify-center ${
-                  gridCols === 2
+                className={`p-2 rounded-full transition-all cursor-pointer flex items-center justify-center ${gridCols === 2
                     ? "bg-[#111111] text-white shadow-sm scale-105"
                     : "text-[#5d5f5f] hover:text-[#111111] hover:bg-[#f3f3f3]"
-                }`}
+                  }`}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
                   <rect x="4" y="4" width="6.5" height="16" rx="1.5" />
@@ -338,11 +313,10 @@ export default function ProductGrid() {
               <button
                 onClick={() => setGridCols(4)}
                 title="Compact Grid View (4 Columns)"
-                className={`p-2 rounded-full transition-all cursor-pointer flex items-center justify-center ${
-                  gridCols === 4
+                className={`p-2 rounded-full transition-all cursor-pointer flex items-center justify-center ${gridCols === 4
                     ? "bg-[#111111] text-white shadow-sm scale-105"
                     : "text-[#888] hover:text-[#111111] hover:bg-[#f3f3f3]"
-                }`}
+                  }`}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
                   <rect x="4" y="4" width="6.5" height="6.5" rx="1.5" />
@@ -398,11 +372,10 @@ export default function ProductGrid() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className={`grid grid-cols-2 ${
-              gridCols === 2
+            className={`grid grid-cols-2 ${gridCols === 2
                 ? "lg:grid-cols-2 gap-5 lg:gap-8"
                 : "sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8"
-            } gpu-accelerated`}
+              } gpu-accelerated`}
           >
             {sorted.map((product) => (
               <ProductCard

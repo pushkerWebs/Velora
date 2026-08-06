@@ -51,14 +51,216 @@ export async function getSellerProducts(req,res){
 }
 
 
-export async function getAllProducts(req,res){
-const products = await productModel.find().populate("seller","name email")
-res.status(200).json({
-    message:"Products fetched successfully",
-    success:true,
-    products
-})
+function escapeRegex(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
+
+function parseSearchQueryTokens(rawQuery) {
+    if (!rawQuery || typeof rawQuery !== "string") {
+        return { detectedCategory: null, attributeTokens: [] };
+    }
+
+    let query = rawQuery.trim().toLowerCase().replace(/\s+/g, " ");
+    let detectedCategory = null;
+
+    // 1. Detect T-Shirt variants in query string
+    // e.g. "t-shirt", "t shirt", "tshirt", "tee shirt", "tee"
+    const tShirtRegex = /\b(t[- ]?shirts?|tshirts?|tee[- ]?shirts?|tees?)\b/gi;
+    if (tShirtRegex.test(query)) {
+        detectedCategory = "T-Shirts";
+        query = query.replace(tShirtRegex, "").trim();
+    } 
+    // 2. Detect Shirt variants (only if T-Shirt wasn't matched)
+    else {
+        const shirtRegex = /\b(shirts?)\b/gi;
+        if (shirtRegex.test(query)) {
+            detectedCategory = "Shirts";
+            query = query.replace(shirtRegex, "").trim();
+        } 
+        // 3. Detect Jeans variants
+        else {
+            const jeansRegex = /\b(jeans?|denim)\b/gi;
+            if (jeansRegex.test(query)) {
+                detectedCategory = "Jeans";
+                query = query.replace(jeansRegex, "").trim();
+            }
+        }
+    }
+
+    // 4. Extract remaining tokens (colors, fit styles, materials, keywords)
+    const attributeTokens = query
+        .split(" ")
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+
+    return { detectedCategory, attributeTokens };
+}
+
+function buildProductSearchQuery(rawSearch, rawCategory) {
+    const queryConditions = [];
+
+    // 1. Explicit Category parameter handling (from UI / URL dropdown)
+    if (rawCategory && rawCategory !== "All") {
+        const cat = rawCategory.trim();
+        if (cat === "Full Sleeve") {
+            queryConditions.push({
+                $or: [
+                    { title: { $regex: /\bfull[- ]?sleeves?\b/i } },
+                    { description: { $regex: /\bfull[- ]?sleeves?\b/i } }
+                ]
+            });
+        } else if (cat === "Boxy Fit") {
+            queryConditions.push({
+                $or: [
+                    { title: { $regex: /\bboxy\b/i } },
+                    { description: { $regex: /\bboxy\b/i } }
+                ]
+            });
+        } else if (cat === "Linen") {
+            queryConditions.push({
+                $or: [
+                    { title: { $regex: /\blinen\b/i } },
+                    { description: { $regex: /\blinen\b/i } },
+                    { category: { $regex: /\blinen\b/i } }
+                ]
+            });
+        } else {
+            // Standard category enum match: "Jeans", "T-Shirts", "Shirts"
+            queryConditions.push({ category: { $regex: new RegExp(`^${escapeRegex(cat)}$`, "i") } });
+        }
+    }
+
+    // 2. Multi-word Search Query Handling (AND Logic + Token Normalization)
+    if (rawSearch && typeof rawSearch === "string" && rawSearch.trim()) {
+        const { detectedCategory, attributeTokens } = parseSearchQueryTokens(rawSearch);
+
+        // A. Strict Product Type Isolation
+        if (detectedCategory === "T-Shirts") {
+            queryConditions.push({
+                $or: [
+                    { category: "T-Shirts" },
+                    { title: { $regex: /\b(t[- ]?shirts?|tshirts?|tee[- ]?shirts?|tees?)\b/i } }
+                ]
+            });
+        } else if (detectedCategory === "Shirts") {
+            queryConditions.push({
+                $and: [
+                    {
+                        $or: [
+                            { category: "Shirts" },
+                            { title: { $regex: /\bshirts?\b/i } }
+                        ]
+                    },
+                    { category: { $ne: "T-Shirts" } },
+                    { title: { $not: { $regex: /\b(t[- ]?shirts?|tshirts?|tee[- ]?shirts?|tees?)\b/i } } }
+                ]
+            });
+        } else if (detectedCategory === "Jeans") {
+            queryConditions.push({
+                $or: [
+                    { category: "Jeans" },
+                    { title: { $regex: /\bjeans?\b/i } }
+                ]
+            });
+        }
+
+        // B. Attribute Tokens (AND Logic: Every attribute token must be satisfied)
+        for (const token of attributeTokens) {
+            const escaped = escapeRegex(token);
+            const tokenRegex = new RegExp(`\\b${escaped}\\b|${escaped}`, "i");
+            queryConditions.push({
+                $or: [
+                    { title: tokenRegex },
+                    { category: tokenRegex },
+                    { description: tokenRegex }
+                ]
+            });
+        }
+    }
+
+    if (queryConditions.length === 0) {
+        return {};
+    }
+
+    if (queryConditions.length === 1) {
+        return queryConditions[0];
+    }
+
+    return { $and: queryConditions };
+}
+
+function rankProductsByRelevance(products, rawSearch) {
+    if (!rawSearch || typeof rawSearch !== "string" || !rawSearch.trim()) {
+        return products;
+    }
+
+    const cleanQuery = rawSearch.trim().toLowerCase();
+    const { detectedCategory, attributeTokens } = parseSearchQueryTokens(rawSearch);
+    const searchWords = cleanQuery.split(" ").filter(Boolean);
+
+    const scoredProducts = products.map((product) => {
+        let score = 0;
+        const titleLower = (product.title || "").toLowerCase();
+        const categoryLower = (product.category || "").toLowerCase();
+        const descLower = (product.description || "").toLowerCase();
+
+        // 1. Exact Title match / Title contains full query boost
+        if (titleLower === cleanQuery) score += 200;
+        else if (titleLower.includes(cleanQuery)) score += 100;
+
+        // 2. Category detection match boost
+        if (detectedCategory) {
+            const normCategory = detectedCategory.toLowerCase();
+            if (categoryLower === normCategory) score += 80;
+            else if (titleLower.includes(normCategory)) score += 50;
+        }
+
+        // 3. Attribute tokens match score
+        for (const token of attributeTokens) {
+            const tokLower = token.toLowerCase();
+            if (titleLower.includes(tokLower)) score += 30;
+            if (categoryLower.includes(tokLower)) score += 20;
+            if (descLower.includes(tokLower)) score += 5;
+        }
+
+        // 4. All search words present in title boost
+        const allInTitle = searchWords.every((w) => titleLower.includes(w));
+        if (allInTitle) score += 60;
+
+        return { product, score };
+    });
+
+    scoredProducts.sort((a, b) => b.score - a.score);
+    return scoredProducts.map((item) => item.product);
+}
+
+export async function getAllProducts(req, res) {
+    try {
+        const { search, category } = req.query;
+        const queryFilter = buildProductSearchQuery(search, category);
+
+        const products = await productModel
+            .find(queryFilter)
+            .populate("seller", "name email")
+            .sort({ createdAt: -1 });
+
+        const rankedProducts = rankProductsByRelevance(products || [], search);
+
+        res.status(200).json({
+            message: "Products fetched successfully",
+            success: true,
+            products: rankedProducts
+        });
+    } catch (error) {
+        console.error("Get all products error:", error.message, error);
+        res.status(500).json({
+            message: "Failed to fetch products",
+            success: false,
+            error: error.message
+        });
+    }
+}
+
 
 
 export async function getProductDetails(req,res){

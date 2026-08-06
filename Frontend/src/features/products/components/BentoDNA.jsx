@@ -304,8 +304,8 @@ const containerVariants = {
   visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
 };
 const cellVariants = {
-  hidden:  { opacity: 0, y: 32, scale: 0.97 },
-  visible: { opacity: 1, y: 0,  scale: 1, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] } },
+  hidden: { opacity: 0, y: 32, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] } },
 };
 
 // ─── Main BentoDNA component ───────────────────────────────────────────────────

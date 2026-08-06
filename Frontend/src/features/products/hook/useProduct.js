@@ -24,11 +24,16 @@ export const useProduct = () => {
     return data.products;
   }
 
-  async function handleGetAllProducts() {
+  async function handleGetAllProducts(params = {}, options = {}) {
     try {
-      const data = await getAllProducts();
+      const data = await getAllProducts(params, options);
       dispatch(setProducts(data?.products || []));
+      return data?.products || [];
     } catch (err) {
+      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        // Silently ignore aborted stale request
+        return;
+      }
       console.error("Failed to load products:", err);
       dispatch(setProducts([]));
     }
