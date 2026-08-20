@@ -17,6 +17,13 @@ if (!process.env.GOOGLE_CLIENT_SECRET) {
 if (!process.env.IMAGEKIT_PRIVATE_KEY) {
     throw new Error("IMAGEKIT_PRIVATE_KEY is not defined in .env")
 }
+if (!process.env.RAZORPAY_KEY_ID) {
+    throw new Error("RAZORPAY_KEY_ID is not defined in .env")
+}
+if (!process.env.RAZORPAY_KEY_SECRET) {
+    throw new Error("RAZORPAY_KEY_SECRET is not defined in .env")
+}
+
 
 
 export const CONFIG = {
@@ -28,5 +35,7 @@ export const CONFIG = {
     IMAGEKIT_PRIVATE_KEY: process.env.IMAGEKIT_PRIVATE_KEY,
     PORT: process.env.PORT || 5000,
     FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:5173",
-    BACKEND_URL: process.env.BACKEND_URL
+    BACKEND_URL: process.env.BACKEND_URL,
+    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET
 }

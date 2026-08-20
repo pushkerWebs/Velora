@@ -467,3 +467,12 @@ html { box-sizing: border-box; }
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* ─── Premium Custom Cursor ─── */
+@media (pointer: fine) {
+  .custom-cursor-active,
+  .custom-cursor-active * {
+    cursor: none !important;
+  }
+}
+

@@ -25,7 +25,8 @@ async function sendTokenResponse(user, res, message) {
             contact: user.contact,
             fullname: user.fullname,
             role: user.role,
-            wishlist: user.wishlist || []
+            wishlist: user.wishlist || [],
+            address: user.address || ""
         }
 
     });
@@ -127,7 +128,8 @@ export const getMe = async (req, res) => {
             contact: user.contact,
             fullname: user.fullname,
             role: user.role,
-            wishlist: user.wishlist || []
+            wishlist: user.wishlist || [],
+            address: user.address || ""
         }
     })
 }
@@ -183,5 +185,38 @@ export const getWishlist = async (req, res) => {
     } catch (error) {
         console.error("Get wishlist error:", error);
         return res.status(500).json({ message: "Error fetching wishlist", success: false });
+    }
+};
+
+export const updateProfile = async (req, res) => {
+    const { fullname, contact, address } = req.body;
+    try {
+        const user = await userModel.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found", success: false });
+        }
+
+        if (fullname !== undefined) user.fullname = fullname;
+        if (contact !== undefined) user.contact = contact;
+        if (address !== undefined) user.address = address;
+
+        await user.save();
+
+        res.status(200).json({
+            message: "Profile updated successfully",
+            success: true,
+            user: {
+                id: user._id,
+                email: user.email,
+                contact: user.contact,
+                fullname: user.fullname,
+                role: user.role,
+                wishlist: user.wishlist || [],
+                address: user.address || ""
+            }
+        });
+    } catch (error) {
+        console.error("Update profile error:", error);
+        res.status(500).json({ message: "Error updating profile", error: error.message, success: false });
     }
 };

@@ -11,6 +11,7 @@ import ProductDetail from "../features/products/pages/ProductDetail";
 import Cart from "../features/cart/pages/Cart";
 import CategoryPage from "../features/products/pages/CategoryPage";
 import Wishlist from "../features/products/pages/Wishlist";
+import Profile from "../features/auth/pages/Profile";
 
 export const routes = createBrowserRouter([
   {
@@ -51,12 +52,20 @@ export const routes = createBrowserRouter([
       {
         path: "product/:productId",
         element: <ProductDetail />,
-      }, 
+      },
       {
         path: "/cart",
         element: (
           <Protected>
             <Cart />
+          </Protected>
+        ),
+      },
+      {
+        path: "/profile",
+        element: (
+          <Protected>
+            <Profile />
           </Protected>
         ),
       },

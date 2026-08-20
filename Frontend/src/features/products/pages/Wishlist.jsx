@@ -7,6 +7,7 @@ import { useCart } from '../../cart/hook/useCart.js'
 import { useWishlist } from '../hook/useWishlist.js'
 import RecommendedCarousel from '../components/RecommendedCarousel.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
+import Footer from '../components/Footer.jsx'
 
 // Helper function to format price
 const formatPrice = (priceVal, currencyVal = 'INR') => {
@@ -32,10 +33,10 @@ function QuickViewModal({ product, onClose, onMoveToBag, currency, cartLoading }
         }
     }, [])
 
-    const primaryImage = typeof product?.images?.[0] === 'string' 
-        ? product.images[0] 
+    const primaryImage = typeof product?.images?.[0] === 'string'
+        ? product.images[0]
         : product?.images?.[0]?.url || 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=600&q=80'
-        
+
     const title = product?.title || 'Product'
     const priceAmount = typeof product?.price === 'object' ? product.price.amount : product?.price || 0
     const formattedVal = formatPrice(priceAmount, currency)
@@ -45,7 +46,7 @@ function QuickViewModal({ product, onClose, onMoveToBag, currency, cartLoading }
 
     return createPortal(
         <AnimatePresence>
-            <div 
+            <div
                 className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md select-none"
                 onClick={onClose}
             >
@@ -66,9 +67,9 @@ function QuickViewModal({ product, onClose, onMoveToBag, currency, cartLoading }
                     </button>
 
                     <div className="w-full md:w-1/2 aspect-[4/5] max-h-[38vh] md:max-h-none bg-[#F4F3F3] overflow-hidden relative shrink-0">
-                        <img 
-                            src={primaryImage} 
-                            alt={title} 
+                        <img
+                            src={primaryImage}
+                            alt={title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                                 e.target.src = 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=600&q=80'
@@ -214,11 +215,6 @@ export default function Wishlist() {
         >
             {/* ── Editorial Minimal Header ── */}
             <div className="max-w-[1440px] mx-auto w-full px-4 sm:px-6 lg:px-12 pt-[85px] sm:pt-[105px] lg:pt-[120px] pb-2">
-                <nav className="flex items-center gap-2 text-[9px] font-bold text-[#888] uppercase tracking-[0.2em] mb-3">
-                    <Link to="/" className="hover:text-black transition-colors">HOME</Link>
-                    <span>/</span>
-                    <span className="text-black font-extrabold">WISHLIST</span>
-                </nav>
 
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#E5E5E5] pb-4 sm:pb-5">
                     <div>
@@ -505,15 +501,6 @@ export default function Wishlist() {
                                         Move All To Bag
                                     </motion.button>
                                 </div>
-
-                                <div className="border-t border-[#E5E5E5] pt-3 flex flex-col gap-1.5 text-[10px] text-[#777]">
-                                    <div className="flex items-center gap-2">
-                                        <svg className="w-3.5 h-3.5 text-[#111111] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25V12.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                        </svg>
-                                        <span>Items in wishlist are saved locally</span>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -563,6 +550,8 @@ export default function Wishlist() {
                     cartLoading={cartLoading}
                 />
             )}
+
+            <Footer />
         </div>
     )
 }

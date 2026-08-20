@@ -166,8 +166,18 @@ function buildProductSearchQuery(rawSearch, rawCategory) {
 
         // B. Attribute Tokens (AND Logic: Every attribute token must be satisfied)
         for (const token of attributeTokens) {
-            const escaped = escapeRegex(token);
-            const tokenRegex = new RegExp(`\\b${escaped}\\b|${escaped}`, "i");
+            let tokenRegex;
+            const normToken = token.toLowerCase();
+            if (normToken === "stripped" || normToken === "striped") {
+                tokenRegex = /\bstrip{1,2}ed\b/i;
+            } else if (normToken === "half-sleeve" || normToken === "half") {
+                tokenRegex = /\bhalf[- ]?sleeves?\b/i;
+            } else if (normToken === "full-sleeve" || normToken === "full") {
+                tokenRegex = /\bfull[- ]?sleeves?\b/i;
+            } else {
+                const escaped = escapeRegex(token);
+                tokenRegex = new RegExp(`\\b${escaped}\\b|${escaped}`, "i");
+            }
             queryConditions.push({
                 $or: [
                     { title: tokenRegex },

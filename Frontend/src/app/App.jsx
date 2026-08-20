@@ -7,6 +7,7 @@ import { motion } from "framer-motion"
 import CartToast from "../features/cart/components/CartToast.jsx"
 import Preloader from "../components/preloader/Preloader.jsx"
 import { usePreloader } from "../components/preloader/usePreloader.js"
+import CustomCursor from "../components/CustomCursor.jsx"
 
 function App() {
   const { handleGetMe } = useAuth()
@@ -35,9 +36,9 @@ function App() {
         animate={
           shouldShow
             ? {
-                scale: isRevealing ? 1.0 : 0.98,
-                opacity: isRevealing ? 1.0 : 0.95,
-              }
+              scale: isRevealing ? 1.0 : 0.98,
+              opacity: isRevealing ? 1.0 : 0.95,
+            }
             : { scale: 1.0, opacity: 1.0 }
         }
         transition={{
@@ -46,6 +47,7 @@ function App() {
         }}
         style={isComplete || !shouldShow ? undefined : { transformOrigin: "center center", willChange: "transform, opacity" }}
       >
+        <CustomCursor />
         <RouterProvider router={routes} />
       </motion.div>
     </>

@@ -8,15 +8,15 @@ export default function SmoothScroll() {
   const location = useLocation();
 
   useEffect(() => {
-    // Initialize Lenis smooth scroll with balanced luxury inertia (Apple / Vercel style)
+    // Initialize Lenis smooth scroll with enhanced gliding latency (silky luxury style)
     const lenis = new Lenis({
-      duration: 1.1,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Smooth exponential decay
+      duration: 1.6, // Longer duration for a more noticeable smooth glide
+      easing: (t) => 1 - Math.pow(1 - t, 5), // Quintic ease-out for ultra smooth deceleration
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 1.0,
-      touchMultiplier: 1.2, // Balanced touch momentum for mobile
+      wheelMultiplier: 1.3, // Stronger scroll wheel glide
+      touchMultiplier: 1.5, // Silkier trackpad/touch momentum
       infinite: false,
     });
 
@@ -54,10 +54,18 @@ export default function SmoothScroll() {
     };
   }, []);
 
-  // Scroll to top on page route navigation
+  // Scroll to top and recalculate dimensions on page route navigation
   useEffect(() => {
-    if (lenisRef.current && !location.hash) {
-      lenisRef.current.scrollTo(0, { immediate: true });
+    if (lenisRef.current) {
+      if (!location.hash) {
+        lenisRef.current.scrollTo(0, { immediate: true });
+      }
+      // Re-sync Lenis scroll height tracking as content renders
+      lenisRef.current.resize();
+      const timer = setTimeout(() => {
+        lenisRef.current?.resize();
+      }, 200);
+      return () => clearTimeout(timer);
     }
   }, [location.pathname]);
 

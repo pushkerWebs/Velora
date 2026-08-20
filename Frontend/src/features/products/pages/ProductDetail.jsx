@@ -1,20 +1,225 @@
 import React, { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams, Link, useNavigate } from "react-router";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useProduct } from "../hook/useProduct.js";
 import { useCart } from "../../cart/hook/useCart.js";
 import { useWishlist } from "../hook/useWishlist.js";
 import RecommendedCarousel from "../components/RecommendedCarousel.jsx";
 import ProductReviews from "../components/ProductReviews.jsx";
+import { motion, AnimatePresence } from "framer-motion";
+import { updateProfileApi } from "../../auth/services/auth.api.js";
+import { setUser } from "../../auth/state/auth.slice.js";
+
+// Helper for currency formatting in Direct Checkout
+const formatPriceLocal = (priceVal, currencyVal = 'INR') => {
+  if (priceVal == null) return ''
+  const amount = typeof priceVal === 'object' ? priceVal.amount : priceVal
+  const currency = typeof priceVal === 'object' ? (priceVal.currency || currencyVal) : currencyVal
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: currency || 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount || 0)
+}
+
+const ProductDirectCheckoutModal = ({ product, quantity, user, onClose, onConfirm }) => {
+  const dispatch = useDispatch()
+  const [fullname, setFullname] = useState(user?.fullname || '')
+  const [contact, setContact] = useState(user?.contact || '')
+  const [address, setAddress] = useState(user?.address || '')
+  const [appliedCoupon, setAppliedCoupon] = useState(null)
+  const [couponError, setCouponError] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const subtotal = (product?.price?.amount || 0) * quantity
+  const currency = product?.price?.currency || 'INR'
+
+  let couponDiscount = 0
+  if (appliedCoupon === 'VELORA10') {
+    couponDiscount = Math.round(subtotal * 0.1)
+  } else if (appliedCoupon === 'VELORASTYLE' && subtotal >= 2999) {
+    couponDiscount = Math.round(subtotal * 0.15)
+  }
+
+  const finalTotal = Math.max(0, subtotal - couponDiscount)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!fullname.trim() || !contact.trim() || !address.trim()) {
+      setError('All fields are required.')
+      return
+    }
+    setError('')
+    setLoading(true)
+    try {
+      const data = await updateProfileApi({ fullname, contact, address })
+      if (data.success && data.user) {
+        dispatch(setUser(data.user))
+        onConfirm(appliedCoupon)
+      } else {
+        setError(data.message || 'Failed to update details.')
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to save address details.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 15 }}
+        className="bg-white border border-[#E5E5E5] rounded-2xl pt-4 pb-7 px-5 sm:pt-5 sm:pb-8 sm:px-6 max-w-md w-full shadow-2xl relative max-h-[92vh] overflow-y-auto scrollbar-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#F4F3F3] hover:bg-[#111] hover:text-white flex items-center justify-center transition-all cursor-pointer text-sm font-bold border border-black/5"
+        >
+          ✕
+        </button>
+
+        <h3 style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-[14px] sm:text-[16px] font-black uppercase tracking-wider text-[#111] border-b border-[#F3F4F6] pb-2.5 mb-2.5 text-left">
+          CONFIRM CHECKOUT DETAILS
+        </h3>
+
+        {error && (
+          <div className="bg-[#FEF2F2] border border-[#FCA5A5] text-[#B91C1C] text-xs font-semibold p-3 rounded-lg mb-4 text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-[11px] sm:text-xs text-left">
+          <div>
+            <label className="block text-[9px] uppercase font-bold tracking-[0.14em] text-[#666] mb-1.5 text-left">Recipient Name</label>
+            <input
+              type="text"
+              required
+              value={fullname}
+              onChange={(e) => setFullname(e.target.value)}
+              className="w-full border border-[#D1D5DB] rounded-lg px-3 py-2 text-[#111] focus:outline-none focus:border-black transition-all bg-white font-semibold"
+              placeholder="Enter recipient full name"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[9px] uppercase font-bold tracking-[0.14em] text-[#666] mb-1.5 text-left">Contact Number</label>
+              <input
+                type="text"
+                required
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+                className="w-full border border-[#D1D5DB] rounded-lg px-3 py-2 text-[#111] focus:outline-none focus:border-black transition-all bg-white font-semibold"
+                placeholder="Enter contact number"
+              />
+            </div>
+            <div>
+              <label className="block text-[9px] uppercase font-bold tracking-[0.14em] text-[#666] mb-1.5 text-left">Product Quantity</label>
+              <div className="w-full border border-[#FAF9F6] bg-[#F4F3F3] rounded-lg px-3 py-2 text-[#111] font-semibold">
+                {quantity} {quantity === 1 ? 'unit' : 'units'}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[9px] uppercase font-bold tracking-[0.14em] text-[#666] mb-1.5 text-left">Shipping Address</label>
+            <textarea
+              required
+              rows="3"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full border border-[#D1D5DB] rounded-lg px-3 py-2 text-[#111] focus:outline-none focus:border-black transition-all resize-none leading-relaxed bg-white font-semibold"
+              placeholder="Enter complete shipping address"
+            />
+          </div>
+
+          <div className="border-t border-[#F3F4F6] pt-3 text-left">
+            <label className="block text-[9px] uppercase font-bold tracking-[0.14em] text-[#999] mb-2 text-left">APPLY AVAILABLE COUPONS</label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAppliedCoupon(appliedCoupon === 'VELORA10' ? null : 'VELORA10')
+                  setCouponError('')
+                }}
+                className={`text-[9px] font-bold tracking-wider px-3 py-1.5 rounded-md border transition-all cursor-pointer ${appliedCoupon === 'VELORA10'
+                    ? 'bg-[#065F46] text-white border-[#065F46]'
+                    : 'bg-[#FAF9F6] border-[#E5E5E5] text-[#111] hover:border-black'
+                  }`}
+              >
+                VELORA10 (10% OFF)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (subtotal < 2999) {
+                    setCouponError('VELORASTYLE requires minimum order value of ₹2,999')
+                  } else {
+                    setAppliedCoupon(appliedCoupon === 'VELORASTYLE' ? null : 'VELORASTYLE')
+                    setCouponError('')
+                  }
+                }}
+                className={`text-[9px] font-bold tracking-wider px-3 py-1.5 rounded-md border transition-all cursor-pointer ${appliedCoupon === 'VELORASTYLE'
+                    ? 'bg-[#065F46] text-white border-[#065F46]'
+                    : 'bg-[#FAF9F6] border-[#E5E5E5] text-[#111] hover:border-black'
+                  }`}
+              >
+                VELORASTYLE (15% OFF)
+              </button>
+            </div>
+            {couponError && (
+              <span className="text-[9px] text-red-600 font-semibold mt-1.5 block text-left">{couponError}</span>
+            )}
+          </div>
+
+          <div className="border-t border-[#F3F4F6] pt-3 flex flex-col gap-1.5 text-xs text-[#555] font-semibold text-left">
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span className="text-black font-bold">{formatPriceLocal(subtotal, currency)}</span>
+            </div>
+            {appliedCoupon && (
+              <div className="flex justify-between text-[#065F46]">
+                <span>Discount ({appliedCoupon}):</span>
+                <span className="font-bold">− {formatPriceLocal(couponDiscount, currency)}</span>
+              </div>
+            )}
+            <div className="flex justify-between border-t border-[#F3F4F6] pt-2 text-black font-bold text-sm">
+              <span>Total Price:</span>
+              <span>{formatPriceLocal(finalTotal, currency)}</span>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#111] hover:bg-black text-white text-[10px] font-black uppercase tracking-[0.16em] py-3.5 rounded-xl transition-all cursor-pointer disabled:opacity-50 mt-2 shadow-md"
+          >
+            {loading ? 'SAVING...' : 'CONFIRM & PROCEED TO PAYMENT →'}
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  )
+}
 
 const ProductDetail = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { productId } = useParams();
   const { handleGetProductById } = useProduct();
-  const { handleAddItem, loading: cartLoading } = useCart();
+  const { handleAddItem, handleCreateDirectOrder, handleVerifyCartOrder, loading: cartLoading } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const user = useSelector((state) => state.auth.user);
+
+  const [showDirectCheckoutModal, setShowDirectCheckoutModal] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -116,17 +321,54 @@ const ProductDetail = () => {
     }
   };
 
-  const handleBuyNow = async () => {
+  const handleBuyNow = () => {
     if (!selectedSize && product?.sizes && product.sizes.length > 0) {
       setSizeError(true);
       return;
     }
     setSizeError(false);
+    setShowDirectCheckoutModal(true);
+  };
+
+  const handleConfirmDirectCheckout = async (couponCode) => {
+    setShowDirectCheckoutModal(false);
     try {
-      await handleAddItem({ productId, quantity, productTitle: product?.title });
-      navigate("/cart");
+      const orderData = await handleCreateDirectOrder({
+        productId,
+        quantity,
+        couponCode: couponCode || undefined,
+      });
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_TRe1PXXpVVhsI8",
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: "Velora",
+        description: "Direct Purchase",
+        order_id: orderData.order.id,
+        handler: async (response) => {
+          const isValid = await handleVerifyCartOrder(response);
+          if (isValid) {
+            setOrderSuccess(true);
+          }
+        },
+        prefill: {
+          name: user?.fullname || user?.name,
+          email: user?.email,
+          contact: user?.contact,
+        },
+        theme: {
+          color: "#111111",
+        },
+        modal: {
+          ondismiss: () => { }
+        }
+      };
+
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.open();
     } catch (err) {
-      console.error("Buy now failed:", err);
+      console.error("Buy now payment failed:", err);
     }
   };
 
@@ -137,20 +379,7 @@ const ProductDetail = () => {
     >
       {/* Main Content Container */}
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-12 py-4 sm:py-8 flex flex-col">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-[11px] font-semibold text-[#747878] uppercase tracking-[0.12em] mb-6 shrink-0">
-          <Link to="/" className="hover:text-black transition-colors">
-            HOME
-          </Link>
-          <span>/</span>
-          <Link to="/products" className="hover:text-black transition-colors">
-            PRODUCTS
-          </Link>
-          <span>/</span>
-          <span className="text-black line-clamp-1">
-            {product?.title || "DETAILS"}
-          </span>
-        </nav>
+
 
         {loading ? (
           <div className="flex-1 flex flex-col items-center justify-center py-24 gap-3">
@@ -193,7 +422,7 @@ const ProductDetail = () => {
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
                   onClick={() => setIsLightboxOpen(true)}
-                  className="relative aspect-[4/5] w-full max-h-[50vh] bg-white rounded-[12px] border border-black/5 shadow-sm overflow-hidden flex items-center justify-center cursor-zoom-in group"
+                  className="relative aspect-[4/5] w-full max-h-[50vh] bg-white rounded-[12px] border border-black/5 shadow-sm overflow-hidden flex items-center justify-center cursor-pointer group"
                 >
                   {totalImages > 0 ? (
                     <img
@@ -254,8 +483,8 @@ const ProductDetail = () => {
                         type="button"
                         onClick={() => setCurrentImageIndex(idx)}
                         className={`relative w-16 aspect-[4/5] shrink-0 rounded-[8px] overflow-hidden border-2 transition-all duration-200 cursor-pointer ${currentImageIndex === idx
-                            ? "border-black shadow-md scale-105"
-                            : "border-black/10 opacity-60 hover:opacity-100"
+                          ? "border-black shadow-md scale-105"
+                          : "border-black/10 opacity-60 hover:opacity-100"
                           }`}
                       >
                         <img
@@ -286,7 +515,7 @@ const ProductDetail = () => {
                           setCurrentImageIndex(idx);
                           setIsLightboxOpen(true);
                         }}
-                        className="relative aspect-[3/4] w-full max-h-[70vh] bg-white rounded-[10px] border border-black/5 shadow-sm overflow-hidden flex items-center justify-center group cursor-zoom-in"
+                        className="relative aspect-[3/4] w-full max-h-[70vh] bg-white rounded-[10px] border border-black/5 shadow-sm overflow-hidden flex items-center justify-center group cursor-pointer"
                         title="Click to enlarge"
                       >
                         <img
@@ -413,10 +642,10 @@ const ProductDetail = () => {
                             setSizeError(false);
                           }}
                           className={`relative min-w-[48px] h-[48px] px-3.5 rounded-[8px] text-[15px] font-bold uppercase tracking-wide border-2 transition-all duration-200 ease-out cursor-pointer flex items-center justify-center ${!s.available
-                              ? "border-[#e4e4e7] text-[#c4c7c7] bg-[#f9f9f9] cursor-not-allowed"
-                              : selectedSize === s.label
-                                ? "bg-black text-white border-black shadow-md scale-105"
-                                : "border-[#c4c7c7] text-[#1a1c1c] bg-white hover:border-black hover:scale-105"
+                            ? "border-[#e4e4e7] text-[#c4c7c7] bg-[#f9f9f9] cursor-not-allowed"
+                            : selectedSize === s.label
+                              ? "bg-black text-white border-black shadow-md scale-105"
+                              : "border-[#c4c7c7] text-[#1a1c1c] bg-white hover:border-black hover:scale-105"
                             }`}
                         >
                           {s.label}
@@ -503,8 +732,8 @@ const ProductDetail = () => {
                   onClick={(e) => toggleWishlist(product._id, e)}
                   aria-label="Save to wishlist"
                   className={`min-h-[44px] px-4 rounded-[8px] border text-[12px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${isWishlisted(product._id)
-                      ? "bg-red-50 text-red-600 border-red-200"
-                      : "bg-white text-black border-black/20 hover:border-black"
+                    ? "bg-red-50 text-red-600 border-red-200"
+                    : "bg-white text-black border-black/20 hover:border-black"
                     }`}
                 >
                   <svg className={`w-5 h-5 ${isWishlisted(product._id) ? "fill-red-600 text-red-600" : "fill-none text-black"}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -643,6 +872,76 @@ const ProductDetail = () => {
           </div>,
           document.body
         )}
+      {/* Direct checkout modal */}
+      {showDirectCheckoutModal && (
+        <ProductDirectCheckoutModal
+          product={product}
+          quantity={quantity}
+          user={user}
+          onClose={() => setShowDirectCheckoutModal(false)}
+          onConfirm={handleConfirmDirectCheckout}
+        />
+      )}
+
+      {/* Direct checkout order success modal */}
+      <AnimatePresence>
+        {orderSuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setOrderSuccess(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 28 }}
+              className="relative bg-white rounded-[28px] shadow-2xl flex flex-col items-center gap-5 px-10 py-10 max-w-sm w-full text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setOrderSuccess(false)}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-[#F4F3F3] hover:bg-[#E5E5E5] transition-colors cursor-pointer border border-black/5"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
+                className="w-20 h-20 rounded-full bg-[#065F46] flex items-center justify-center shadow-lg"
+              >
+                <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </motion.div>
+
+              <div className="flex flex-col gap-1.5 text-center">
+                <h2 style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-[22px] font-black uppercase tracking-tight text-[#111111]">
+                  Order Completed!
+                </h2>
+                <p className="text-[13px] text-[#747878] leading-relaxed">
+                  Your payment was successful. We'll start processing your order right away.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setOrderSuccess(false);
+                  navigate("/profile");
+                }}
+                className="w-full bg-[#111111] text-[#FAF9F6] text-[11px] font-extrabold uppercase tracking-[0.18em] py-3.5 rounded-full hover:bg-black transition-all cursor-pointer text-center"
+              >
+                Go to My Orders
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

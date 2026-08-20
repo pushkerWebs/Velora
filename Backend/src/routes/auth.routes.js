@@ -10,7 +10,8 @@ import {
   getMe,
   logout,
   toggleWishlist,
-  getWishlist
+  getWishlist,
+  updateProfile
 } from "../controllers/auth.controller.js";
 import { authenticateUser } from "../middlewares/auth.middleware.js";
 import passport from "passport";
@@ -39,9 +40,10 @@ router.get(
   googleCallback,
 );
 
-router.get('/me',authenticateUser,getMe)
+router.get('/me', authenticateUser, getMe)
 router.post('/logout', logout)
 router.post('/wishlist/toggle/:productId', authenticateUser, toggleWishlist)
 router.get('/wishlist', authenticateUser, getWishlist)
+router.put('/profile', authenticateUser, updateProfile)
 
 export default router;

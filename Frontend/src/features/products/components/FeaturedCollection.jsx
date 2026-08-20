@@ -109,39 +109,6 @@ export default function FeaturedCollection() {
       {/* ── PART 2: FEATURED PRODUCTS ── */}
       <div className="max-w-[1440px] mx-auto px-6 sm:px-12 lg:px-16 pt-10 sm:pt-14 lg:pt-16 pb-2 sm:pb-4 lg:pb-4">
 
-        {/* ── HEADING (Fade upward, animate once) ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-          className="flex flex-col items-center text-center mb-8 sm:mb-10 lg:mb-12 gpu-accelerated"
-        >
-          {/* Top Heading */}
-          <p
-            className="text-[10px] sm:text-[11px] font-bold tracking-[0.35em] text-[#777] uppercase mb-2 sm:mb-3"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
-          >
-            VELORA EDITION 2026
-          </p>
-
-          {/* Large Title */}
-          <h2
-            className="text-[32px] sm:text-[44px] lg:text-[52px] font-light text-[#111] tracking-[-0.03em] leading-tight mb-2 sm:mb-3"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
-            The Modern Collection
-          </h2>
-
-          {/* Small Description */}
-          <p
-            className="text-[13px] sm:text-[15px] font-light text-[#666] max-w-[460px]"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
-            Tailored silhouettes crafted with premium fabrics for everyday luxury.
-          </p>
-        </motion.div>
-
         {/* ── LOADING SPINNER OR PRODUCT GRID ── */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-4">

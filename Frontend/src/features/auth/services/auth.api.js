@@ -42,3 +42,8 @@ export async function getWishlistApi(){
     const response = await authApiInstance.get("/wishlist")
     return response.data
 }
+
+export async function updateProfileApi({ fullname, contact, address }) {
+    const response = await authApiInstance.put("/profile", { fullname, contact, address })
+    return response.data
+}

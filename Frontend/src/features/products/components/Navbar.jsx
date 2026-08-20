@@ -306,42 +306,13 @@ export default function Navbar({ user: userProp }) {
             </Link>
 
             {user ? (
-              <div className="relative">
-                <button
-                  aria-label="Account"
-                  onClick={() => setUserMenuOpen((prev) => !prev)}
-                  className="flex items-center gap-2 text-[#111] transition-colors duration-300 hover:opacity-75 cursor-pointer p-1"
-                >
-                  <UserIcon />
-                </button>
-
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-[#e5e7eb] rounded-lg shadow-xl py-2 z-50 flex flex-col gap-1">
-                    <div className="px-4 py-2 border-b border-[#f3f4f6]">
-                      <p className="text-[12px] font-bold text-[#111] leading-tight truncate">{user.fullname}</p>
-                      <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#f59e0b] mt-0.5">{user.role}</p>
-                    </div>
-                    {user.role === "seller" && (
-                      <Link
-                        to="/seller/dashboard"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="px-4 py-2 text-[11px] font-semibold text-[#111] hover:bg-[#f9fafb] transition-colors flex items-center gap-2"
-                      >
-                        Seller Dashboard
-                      </Link>
-                    )}
-                    <button
-                      onClick={async () => {
-                        setUserMenuOpen(false);
-                        await handleSignOut();
-                      }}
-                      className="w-full text-left px-4 py-2 text-[11px] font-bold text-red-600 hover:bg-[#fef2f2] transition-colors cursor-pointer"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
+              <Link
+                to="/profile"
+                aria-label="Account"
+                className="flex items-center gap-2 text-[#111] transition-colors duration-300 hover:opacity-75 cursor-pointer p-1"
+              >
+                <UserIcon />
+              </Link>
             ) : (
               <Link
                 to="/login"
@@ -361,29 +332,41 @@ export default function Navbar({ user: userProp }) {
           </div>
 
           {/* ── Mobile Right Action Icons ── */}
-          <div className={`lg:hidden ml-auto flex items-center gap-1 transition-opacity duration-200 ${searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div className={`lg:hidden ml-auto flex items-center gap-0.5 transition-opacity duration-200 ${searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
               aria-label="Search"
               onClick={() => setSearchOpen(true)}
-              className="w-11 h-11 text-[#111] transition-colors duration-300 cursor-pointer flex items-center justify-center"
+              className="w-9 h-9 text-[#111] transition-colors duration-300 cursor-pointer flex items-center justify-center"
             >
               <SearchIcon />
             </button>
             <Link
+              to="/wishlist"
+              aria-label="Wishlist"
+              className="w-9 h-9 text-[#111] transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
+            >
+              <HeartIcon />
+              {wishlistIds.length > 0 && (
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-600 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center pointer-events-none shadow-xs">
+                  {wishlistIds.length > 9 ? "9+" : wishlistIds.length}
+                </span>
+              )}
+            </Link>
+            <Link
               to="/cart"
               aria-label="Cart"
-              className="w-11 h-11 text-[#111] transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
+              className="w-9 h-9 text-[#111] transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
             >
               <CartIcon />
               {cartItems.length > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-[#f59e0b] text-black text-[9px] font-extrabold rounded-full flex items-center justify-center pointer-events-none">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-[#f59e0b] text-black text-[9px] font-extrabold rounded-full flex items-center justify-center pointer-events-none">
                   {cartItems.length > 9 ? "9+" : cartItems.length}
                 </span>
               )}
             </Link>
             <button
               onClick={() => setMobileOpen(true)}
-              className="w-11 h-11 text-[#111] transition-colors duration-300 cursor-pointer flex items-center justify-center"
+              className="w-9 h-9 text-[#111] transition-colors duration-300 cursor-pointer flex items-center justify-center"
               aria-label="Open menu"
             >
               <MenuIcon />
@@ -451,11 +434,30 @@ export default function Navbar({ user: userProp }) {
                   {l.label}
                 </Link>
               ))}
+              <Link
+                to="/wishlist"
+                onClick={() => setMobileOpen(false)}
+                className="text-[13px] font-semibold uppercase tracking-[0.16em] text-[#111] hover:opacity-50 transition-opacity flex items-center justify-between"
+              >
+                <span>Wishlist</span>
+                {wishlistIds.length > 0 && (
+                  <span className="text-[10px] font-extrabold bg-red-600 text-white px-2 py-0.5 rounded-full">
+                    {wishlistIds.length}
+                  </span>
+                )}
+              </Link>
             </nav>
 
             <div className="flex flex-col gap-3 mt-auto">
               {user ? (
                 <>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileOpen(false)}
+                    className="text-center border border-[#111] text-[#111] text-[11px] font-bold uppercase tracking-[0.12em] py-3 hover:bg-[#111] hover:text-white transition-all"
+                  >
+                    Profile
+                  </Link>
                   <Link
                     to="/cart"
                     onClick={() => setMobileOpen(false)}

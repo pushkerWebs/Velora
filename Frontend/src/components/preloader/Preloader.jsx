@@ -70,7 +70,7 @@ export default function Preloader({ progress, phase, isRevealing, isComplete, sh
         </div>
 
         {/* VELORA Brand Title (subtly scales down at 100% pause) */}
-        <div className="absolute inset-0 flex flex-col items-center justify-end pb-0 sm:pb-1 pointer-events-none px-6">
+        <div className="absolute inset-0 flex flex-col items-center justify-center sm:justify-end pb-0 sm:pb-1 pointer-events-none px-2 sm:px-6">
           <motion.h1
             initial={{ opacity: 0, y: 15, scale: 1 }}
             animate={{
@@ -83,7 +83,7 @@ export default function Preloader({ progress, phase, isRevealing, isComplete, sh
               opacity: { duration: 0.7 },
               y: { duration: 0.7 },
             }}
-            className="text-[48px] xs:text-[68px] sm:text-[110px] md:text-[145px] lg:text-[170px] font-black uppercase tracking-[0.22em] pl-[0.22em] leading-none text-white select-none text-center"
+            className="text-[40px] xs:text-[56px] sm:text-[110px] md:text-[145px] lg:text-[170px] font-black uppercase tracking-[0.14em] sm:tracking-[0.22em] pl-[0.14em] sm:pl-[0.22em] leading-none text-white select-none text-center whitespace-nowrap"
             style={{ fontFamily: "'Montserrat', sans-serif", willChange: "transform" }}
           >
             VELORA

@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { useCart } from '../hook/useCart.js'
 import { useAuth } from '../../auth/hook/useAuth.js'
 import { useProduct } from '../../products/hook/useProduct.js'
 import RecommendedCarousel from '../../products/components/RecommendedCarousel.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useRazorpay } from 'react-razorpay'
+import Footer from '../../products/components/Footer.jsx'
+import { updateProfileApi } from '../../auth/services/auth.api.js'
+import { setUser } from '../../auth/state/auth.slice.js'
+
 
 // Helper function to format prices cleanly
 const formatPrice = (priceVal, currencyVal = 'INR') => {
@@ -27,17 +32,129 @@ const PaymentBadge = ({ label }) => (
     </div>
 )
 
+// Confirm Address Modal Component
+const ConfirmAddressModal = ({ user, onClose, onConfirm }) => {
+    const dispatch = useDispatch()
+    const [fullname, setFullname] = useState(user?.fullname || '')
+    const [contact, setContact] = useState(user?.contact || '')
+    const [address, setAddress] = useState(user?.address || '')
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        if (!fullname.trim() || !contact.trim() || !address.trim()) {
+            setError('All fields are required to deliver your order.')
+            return
+        }
+        setError('')
+        setLoading(true)
+        try {
+            const data = await updateProfileApi({ fullname, contact, address })
+            if (data.success && data.user) {
+                dispatch(setUser(data.user))
+                onConfirm()
+            } else {
+                setError(data.message || 'Failed to update delivery details.')
+            }
+        } catch (err) {
+            setError(err?.response?.data?.message || 'Failed to save address details.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                className="bg-white border border-[#E5E5E5] rounded-2xl pt-4 pb-7 px-5 sm:pt-5 sm:pb-8 sm:px-6 max-w-md w-full shadow-2xl relative max-h-[92vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#F4F3F3] hover:bg-[#111] hover:text-white flex items-center justify-center transition-all cursor-pointer text-sm font-bold border border-black/5"
+                >
+                    ✕
+                </button>
+
+                <h3 style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-[14px] sm:text-[16px] font-black uppercase tracking-wider text-[#111] border-b border-[#F3F4F6] pb-3 mb-3">
+                    CONFIRM DELIVERY ADDRESS
+                </h3>
+
+                {error && (
+                    <div className="bg-[#FEF2F2] border border-[#FCA5A5] text-[#B91C1C] text-xs font-semibold p-3 rounded-lg mb-4 text-center">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-[11px] sm:text-xs text-left">
+                    <div>
+                        <label className="block text-[9px] uppercase font-bold tracking-[0.14em] text-[#666] mb-1.5">Recipient Name</label>
+                        <input
+                            type="text"
+                            required
+                            value={fullname}
+                            onChange={(e) => setFullname(e.target.value)}
+                            className="w-full border border-[#D1D5DB] rounded-lg px-3 py-2 text-[#111] focus:outline-none focus:border-black transition-all bg-white font-semibold"
+                            placeholder="Enter recipient full name"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-[9px] uppercase font-bold tracking-[0.14em] text-[#666] mb-1.5">Contact Number</label>
+                        <input
+                            type="text"
+                            required
+                            value={contact}
+                            onChange={(e) => setContact(e.target.value)}
+                            className="w-full border border-[#D1D5DB] rounded-lg px-3 py-2 text-[#111] focus:outline-none focus:border-black transition-all bg-white font-semibold"
+                            placeholder="Enter contact number"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-[9px] uppercase font-bold tracking-[0.14em] text-[#666] mb-1.5">Shipping Address</label>
+                        <textarea
+                            required
+                            rows="4"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            className="w-full border border-[#D1D5DB] rounded-lg px-3 py-2 text-[#111] focus:outline-none focus:border-black transition-all resize-none leading-relaxed bg-white font-semibold"
+                            placeholder="Enter complete shipping address"
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-[#111] hover:bg-black text-white text-[10px] font-black uppercase tracking-[0.16em] py-3 rounded-xl transition-all cursor-pointer disabled:opacity-50 mt-2"
+                    >
+                        {loading ? 'SAVING...' : 'CONFIRM & PROCEED TO PAYMENT →'}
+                    </button>
+                </form>
+            </motion.div>
+        </div>
+    )
+}
+
 const Cart = () => {
     const navigate = useNavigate()
     const {
         handleGetCart,
         handleAddItem,
         handleDecrementItem,
+        handleCreateCartOrder,
+        handleVerifyCartOrder,
         totalPrice: backendTotalPrice,
         totalSavings: backendTotalSavings,
         currency: backendCurrency,
         loading
     } = useCart()
+
+    const { error, isLoading, Razorpay } = useRazorpay()
 
     const { handleLogout } = useAuth()
     const { handleGetAllProducts } = useProduct()
@@ -46,13 +163,74 @@ const Cart = () => {
     const cartItems = useSelector((state) => state.cart.items) || []
     const recommendedProducts = useSelector((state) => state.product?.products) || []
 
+    const dispatch = useDispatch()
     const [pageLoading, setPageLoading] = useState(true)
     const [wishlistItems, setWishlistItems] = useState({})
+    const [orderSuccess, setOrderSuccess] = useState(false)
+    const [paymentLoading, setPaymentLoading] = useState(false)
+
+    // Address and Coupon states
+    const [showAddressModal, setShowAddressModal] = useState(false)
+    const [appliedCoupon, setAppliedCoupon] = useState(null)
+    const [couponCode, setCouponCode] = useState('')
+    const [couponError, setCouponError] = useState('')
 
     const handleSignOut = async () => {
         await handleLogout()
         navigate('/')
     }
+
+    const handleCheckout = () => {
+        setShowAddressModal(true)
+    }
+
+    const handleConfirmAddressAndPay = async () => {
+        setShowAddressModal(false)
+        await proceedToPayment()
+    }
+
+    async function proceedToPayment() {
+        try {
+            setPaymentLoading(true)
+            const orderData = await handleCreateCartOrder({ couponCode: appliedCoupon || undefined })
+            console.log(orderData)
+
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_TRe1PXXpVVhsI8",
+                amount: orderData.order.amount,
+                currency: orderData.order.currency,
+                name: "Velora",
+                description: "Test Transaction",
+                order_id: orderData.order.id,
+                handler: async (response) => {
+                    const isValid = await handleVerifyCartOrder(response)
+                    if (isValid) {
+                        setOrderSuccess(true)
+                        setAppliedCoupon(null)
+                    }
+                    setPaymentLoading(false)
+                },
+                prefill: {
+                    name: user?.fullname || user?.name,
+                    email: user?.email,
+                    contact: user?.contact,
+                },
+                theme: {
+                    color: "#111111",
+                },
+                modal: {
+                    ondismiss: () => setPaymentLoading(false)
+                }
+            }
+
+            const razorpayInstance = new Razorpay(options)
+            razorpayInstance.open()
+        } catch (err) {
+            console.error('Checkout failed:', err)
+            setPaymentLoading(false)
+        }
+    }
+
 
     const toggleWishlist = (productId) => {
         setWishlistItems(prev => ({
@@ -83,6 +261,21 @@ const Cart = () => {
     const subtotal = backendTotalPrice || 0
     const currency = backendCurrency || 'INR'
 
+    // Auto-remove VELORASTYLE if subtotal drops below 2999
+    useEffect(() => {
+        if (appliedCoupon === 'VELORASTYLE' && subtotal < 2999) {
+            setAppliedCoupon(null)
+            setCouponError('VELORASTYLE coupon removed: Order must be above ₹2,999')
+        }
+    }, [subtotal, appliedCoupon])
+
+    let couponDiscount = 0
+    if (appliedCoupon === 'VELORA10') {
+        couponDiscount = Math.round(subtotal * 0.1)
+    } else if (appliedCoupon === 'VELORASTYLE' && subtotal >= 2999) {
+        couponDiscount = Math.round(subtotal * 0.15)
+    }
+
     const FREE_SHIPPING_THRESHOLD = 999
     const amountAwayFromFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal)
     const freeShippingProgress = Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100))
@@ -90,13 +283,85 @@ const Cart = () => {
     const formattedSubtotal = formatPrice(subtotal, currency)
     const shippingFee = subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD ? 99 : 0
     const formattedShipping = shippingFee === 0 ? 'FREE' : formatPrice(shippingFee, currency)
-    const formattedTotal = formatPrice(subtotal + shippingFee, currency)
+    const formattedTotal = formatPrice(Math.max(0, subtotal + shippingFee - couponDiscount), currency)
 
     return (
         <div
             className="min-h-screen flex flex-col bg-[#FAF9F6] text-[#111111] antialiased overflow-x-hidden"
             style={{ fontFamily: "'Inter', sans-serif" }}
         >
+            {/* ── Order Success Modal ── */}
+            <AnimatePresence>
+                {orderSuccess && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                        style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+                        onClick={(e) => { if (e.target === e.currentTarget) setOrderSuccess(false) }}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.85, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                            className="relative bg-white rounded-[28px] shadow-2xl flex flex-col items-center gap-5 px-10 py-10 max-w-sm w-full text-center"
+                        >
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setOrderSuccess(false)}
+                                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-[#F4F3F3] hover:bg-[#E5E5E5] transition-colors cursor-pointer"
+                                aria-label="Close"
+                            >
+                                <svg className="w-4 h-4 text-[#555]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+
+                            {/* Animated Checkmark Circle */}
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.15 }}
+                                className="w-20 h-20 rounded-full bg-[#065F46] flex items-center justify-center shadow-lg"
+                            >
+                                <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <motion.path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M5 13l4 4L19 7"
+                                        initial={{ pathLength: 0 }}
+                                        animate={{ pathLength: 1 }}
+                                        transition={{ duration: 0.5, delay: 0.3 }}
+                                    />
+                                </svg>
+                            </motion.div>
+
+                            {/* Text */}
+                            <div className="flex flex-col gap-1.5">
+                                <h2
+                                    style={{ fontFamily: "'Montserrat', sans-serif" }}
+                                    className="text-[22px] font-black uppercase tracking-tight text-[#111111]"
+                                >
+                                    Order Completed!
+                                </h2>
+                                <p className="text-[13px] text-[#747878] leading-relaxed">
+                                    Your payment was successful. We'll start processing your order right away.
+                                </p>
+                            </div>
+
+                            {/* CTA */}
+                            <button
+                                onClick={() => { setOrderSuccess(false); navigate('/') }}
+                                className="w-full bg-[#111111] text-[#FAF9F6] text-[11px] font-extrabold uppercase tracking-[0.18em] py-3.5 rounded-full hover:bg-black transition-all cursor-pointer"
+                            >
+                                Continue Shopping
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             {/* ── Page Header ── */}
             <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 lg:px-12 pt-20 sm:pt-24 pb-3">
                 <nav className="flex items-center gap-2 text-[9px] sm:text-[10px] font-semibold text-[#747878] uppercase tracking-[0.16em] mb-3 sm:mb-4">
@@ -447,6 +712,105 @@ const Cart = () => {
                                         <span className="font-bold text-[#111111]">Included</span>
                                     </div>
 
+                                    {appliedCoupon && (
+                                        <div className="flex items-center justify-between text-[#065F46] bg-[#065F46]/5 px-3 py-2 rounded-lg border border-[#065F46]/20">
+                                            <span className="font-extrabold text-[11px]">
+                                                Coupon Applied ({appliedCoupon})
+                                            </span>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-black text-[12px]">− {formatPrice(couponDiscount, currency)}</span>
+                                                <button
+                                                    onClick={() => setAppliedCoupon(null)}
+                                                    className="text-xs text-red-600 hover:text-red-800 font-bold ml-1 cursor-pointer font-sans"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Promo / Coupon Section */}
+                                    <div className="border-t border-b border-[#E5E5E5]/60 py-3.5 flex flex-col gap-2.5">
+                                        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#999] block text-left">PROMO CODE / COUPON</span>
+
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                value={couponCode}
+                                                onChange={(e) => {
+                                                    setCouponCode(e.target.value.toUpperCase())
+                                                    setCouponError('')
+                                                }}
+                                                placeholder="ENTER CODE"
+                                                className="flex-1 border border-[#D1D5DB] rounded-lg px-3 py-2 text-[11px] text-[#111] focus:outline-none focus:border-black uppercase font-mono tracking-wider bg-white h-9"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const trimmed = couponCode.trim().toUpperCase()
+                                                    if (trimmed === 'VELORA10') {
+                                                        setAppliedCoupon('VELORA10')
+                                                        setCouponCode('')
+                                                        setCouponError('')
+                                                    } else if (trimmed === 'VELORASTYLE') {
+                                                        if (subtotal < 2999) {
+                                                            setCouponError('VELORASTYLE requires minimum order value of ₹2,999')
+                                                        } else {
+                                                            setAppliedCoupon('VELORASTYLE')
+                                                            setCouponCode('')
+                                                            setCouponError('')
+                                                        }
+                                                    } else if (!trimmed) {
+                                                        setCouponError('Please enter a coupon code')
+                                                    } else {
+                                                        setCouponError('Invalid coupon code')
+                                                    }
+                                                }}
+                                                className="bg-[#111111] hover:bg-black text-white text-[10px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition-all cursor-pointer h-9 shrink-0"
+                                            >
+                                                APPLY
+                                            </button>
+                                        </div>
+
+                                        {couponError && (
+                                            <span className="text-[10px] text-red-600 font-semibold text-left block">{couponError}</span>
+                                        )}
+
+                                        {/* Quick Click Available Coupons */}
+                                        <div className="flex flex-col gap-1.5 mt-1 border-t border-[#F3F4F6] pt-2 text-left">
+                                            <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-[#777]">TAP TO APPLY AVAILABLE COUPONS</span>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                <button
+                                                    onClick={() => {
+                                                        setAppliedCoupon('VELORA10')
+                                                        setCouponError('')
+                                                    }}
+                                                    className={`text-[9px] font-bold tracking-wider px-2.5 py-1 rounded-md border transition-all cursor-pointer ${appliedCoupon === 'VELORA10'
+                                                            ? 'bg-[#065F46] text-white border-[#065F46]'
+                                                            : 'bg-[#FAF9F6] border-[#E5E5E5] text-[#111] hover:border-black'
+                                                        }`}
+                                                >
+                                                    VELORA10 (10% OFF)
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (subtotal < 2999) {
+                                                            setCouponError('VELORASTYLE requires minimum order value of ₹2,999')
+                                                        } else {
+                                                            setAppliedCoupon('VELORASTYLE')
+                                                            setCouponError('')
+                                                        }
+                                                    }}
+                                                    className={`text-[9px] font-bold tracking-wider px-2.5 py-1 rounded-md border transition-all cursor-pointer ${appliedCoupon === 'VELORASTYLE'
+                                                            ? 'bg-[#065F46] text-white border-[#065F46]'
+                                                            : 'bg-[#FAF9F6] border-[#E5E5E5] text-[#111] hover:border-black'
+                                                        }`}
+                                                >
+                                                    VELORASTYLE (15% OFF)
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="border-t border-[#E5E5E5] my-0.5 pt-3 flex items-center justify-between">
                                         <span className="text-[13px] font-black uppercase tracking-wide text-[#111111]">Final Total</span>
                                         <span className="text-[18px] sm:text-[20px] font-black text-[#111111]">{formattedTotal}</span>
@@ -458,6 +822,7 @@ const Cart = () => {
                                     whileHover={{ scale: 1.01 }}
                                     whileTap={{ scale: 0.98 }}
                                     className="w-full bg-[#111111] hover:bg-black text-[#FAF9F6] text-[11px] font-extrabold uppercase tracking-[0.18em] py-3.5 rounded-full shadow-md transition-all cursor-pointer"
+                                    onClick={handleCheckout}
                                 >
                                     PROCEED TO CHECKOUT
                                 </motion.button>
@@ -503,6 +868,8 @@ const Cart = () => {
                 />
             </main>
 
+            <Footer />
+
             {/* ── Touch-Friendly Mobile Sticky Bottom Checkout Bar ── */}
             {cartItems.length > 0 && (
                 <div className="block lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E5E5E5] px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
@@ -514,12 +881,22 @@ const Cart = () => {
 
                         <motion.button
                             whileTap={{ scale: 0.97 }}
-                            className="bg-[#111111] text-[#FAF9F6] text-[10px] font-black uppercase tracking-[0.16em] px-6 py-3 rounded-full shadow-md cursor-pointer flex-1 max-w-[200px] text-center"
+                            onClick={handleCheckout}
+                            disabled={paymentLoading}
+                            className="bg-[#111111] text-[#FAF9F6] text-[10px] font-black uppercase tracking-[0.16em] px-6 py-3 rounded-full shadow-md cursor-pointer flex-1 max-w-[200px] text-center disabled:opacity-60"
                         >
-                            CHECKOUT →
+                            {paymentLoading ? 'PROCESSING...' : 'CHECKOUT →'}
                         </motion.button>
                     </div>
                 </div>
+            )}
+
+            {showAddressModal && (
+                <ConfirmAddressModal
+                    user={user}
+                    onClose={() => setShowAddressModal(false)}
+                    onConfirm={handleConfirmAddressAndPay}
+                />
             )}
         </div>
     )

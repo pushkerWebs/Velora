@@ -7,7 +7,8 @@ const userSchema = new mongoose.Schema({
     password:{type:String,required:true},
     fullname:{type:String,required:true},
     role:{type:String,enum:["buyer","seller"],default:"buyer"},
-    wishlist:[{type: mongoose.Schema.Types.ObjectId, ref: 'Product'}]
+    wishlist:[{type: mongoose.Schema.Types.ObjectId, ref: 'Product'}],
+    address:{type:String,default:""}
 })
 
 userSchema.pre('save', async function(){

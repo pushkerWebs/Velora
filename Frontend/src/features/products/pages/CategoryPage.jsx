@@ -49,7 +49,7 @@ const CONFIG = {
     heading: "THE ART OF THE SHIRT",
     tagline: "Impeccable cuts. Premium linen & Egyptian cotton. Crafted for elegance.",
     heroBg: "/shirt-page-banner.png",
-    chips: ["All", "New Arrivals", "Best Sellers", "Formal", "Casual", "Linen", "Oxford", "Cuban Collar"],
+    chips: ["All", "Linen", "Stripped", "Half-Sleeve", "Full Sleeve"],
     promoBannerTitle: "THE VELORA SHIRT EDIT",
     promoBannerSub: "The shirt, perfected for the modern professional.",
     marquee: "PREMIUM SHIRTS • VELORA FORMAL 2026 • TAILORED PRECISION • DRESSED WITH INTENT • ",
