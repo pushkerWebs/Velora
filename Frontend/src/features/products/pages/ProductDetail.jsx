@@ -10,6 +10,7 @@ import ProductReviews from "../components/ProductReviews.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { updateProfileApi } from "../../auth/services/auth.api.js";
 import { setUser } from "../../auth/state/auth.slice.js";
+import { useRazorpay } from "react-razorpay";
 
 // Helper for currency formatting in Direct Checkout
 const formatPriceLocal = (priceVal, currencyVal = 'INR') => {
@@ -217,6 +218,7 @@ const ProductDetail = () => {
   const { handleAddItem, handleCreateDirectOrder, handleVerifyCartOrder, loading: cartLoading } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const user = useSelector((state) => state.auth.user);
+  const { Razorpay } = useRazorpay();
 
   const [showDirectCheckoutModal, setShowDirectCheckoutModal] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
@@ -365,7 +367,7 @@ const ProductDetail = () => {
         }
       };
 
-      const razorpayInstance = new window.Razorpay(options);
+      const razorpayInstance = new Razorpay(options);
       razorpayInstance.open();
     } catch (err) {
       console.error("Buy now payment failed:", err);
