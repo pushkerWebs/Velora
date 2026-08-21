@@ -9,7 +9,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ email: "", password: "", role: "buyer" });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [validationError, setValidationError] = useState("");
 
   const handleChange = (e) => {
@@ -30,7 +30,6 @@ export default function Login() {
     const result = await handleLogin({
       email: formData.email,
       password: formData.password,
-      role: formData.role,
     });
     if (result.success) {
       navigate(result.user?.role === "seller" ? "/seller/dashboard" : "/");
@@ -80,7 +79,7 @@ export default function Login() {
           {/* Form */}
           <form className="reg-form" onSubmit={handleSubmit}>
 
-            {/* Email */}
+            {/* Email Address */}
             <div className="reg-field">
               <label htmlFor="login-email" className="reg-label">Email Address</label>
               <input
@@ -92,6 +91,7 @@ export default function Login() {
                 value={formData.email}
                 onChange={handleChange}
                 className="velora-input reg-input"
+                style={{ flex: 1 }}
               />
             </div>
 
@@ -120,34 +120,7 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Role Selection */}
-            <div className="reg-field">
-              <label className="reg-label">Login As</label>
-              <div className="flex gap-6 mt-2 pb-2" style={{ borderBottom: "1px solid #c4c7c7" }}>
-                <label className="flex items-center gap-2 text-sm text-[#1a1a1a] cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="buyer"
-                    checked={formData.role === "buyer"}
-                    onChange={handleChange}
-                    className="accent-[#f59e0b] w-4 h-4 cursor-pointer"
-                  />
-                  <span className="font-medium text-[13px] tracking-wide uppercase">Buyer</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm text-[#1a1a1a] cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="seller"
-                    checked={formData.role === "seller"}
-                    onChange={handleChange}
-                    className="accent-[#f59e0b] w-4 h-4 cursor-pointer"
-                  />
-                  <span className="font-medium text-[13px] tracking-wide uppercase">Seller</span>
-                </label>
-              </div>
-            </div>
+
 
             {/* Forgot password */}
             <div style={{ textAlign: "right", marginTop: "-8px" }}>
@@ -173,7 +146,7 @@ export default function Login() {
             <button
               type="button"
               className="reg-btn-outline"
-              onClick={() => window.location.href = `${API_URL}/api/auth/google?role=${formData.role}`}
+              onClick={() => window.location.href = `${API_URL}/api/auth/google?role=buyer`}
             >
               <svg width="15" height="15" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />

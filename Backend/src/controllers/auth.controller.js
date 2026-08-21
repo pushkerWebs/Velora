@@ -56,25 +56,21 @@ export const register = async (req, res) => {
 }
 
 export const login = async (req, res) => {
-    const { email, password } = req.body
-
+    const { email, contact, password } = req.body;
     try {
-        const user = await userModel.findOne({ email })
-
+        const query = email ? { email } : { contact };
+        const user = await userModel.findOne(query);
         if (!user) {
-            return res.status(401).json({ message: "Invalid email or password" })
+            return res.status(401).json({ message: "Invalid email or password" });
         }
-
-        const isMatch = await user.comparePassword(password)
+        const isMatch = await user.comparePassword(password);
         if (!isMatch) {
-            return res.status(401).json({ message: "Invalid email or password" })
+            return res.status(401).json({ message: "Invalid email or password" });
         }
-
-        await sendTokenResponse(user, res, "Login successful")
-
+        await sendTokenResponse(user, res, "Login successful");
     } catch (error) {
-        console.error("Login error:", error.message, error)
-        res.status(500).json({ message: "Error logging in", error: error.message })
+        console.error("Login error:", error.message, error);
+        res.status(500).json({ message: "Error logging in", error: error.message });
     }
 }
 

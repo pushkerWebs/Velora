@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// ── Mock Reviews Data (3 Curated Realistic Reviews) ───────────────────────────
+// ── Mock Reviews Data (5 Curated Realistic Reviews) ───────────────────────────
 const MOCK_REVIEWS = [
   {
     id: "rev-1",
@@ -30,6 +30,15 @@ const MOCK_REVIEWS = [
     comment: "Looks exactly like the photos. Delivery was quick. Packaging felt like opening a luxury campaign archive piece.",
     verified: true,
   },
+  {
+    id: "rev-4",
+    name: "Vikram Malhotra",
+    rating: 2,
+    date: "July 15, 2026",
+    title: "Disappointing Fit & Loose Stitching",
+    comment: "The stitching started coming off after a single wash. Sizing is way off. Disappointing experience for a premium brand.",
+    verified: true,
+  },
 ];
 
 // Rating Distribution Data
@@ -46,12 +55,21 @@ function StarRating({ rating, size = "sm" }) {
   const stars = [];
   const starSizeClass = size === "lg" ? "text-lg sm:text-xl" : "text-xs sm:text-sm";
   
+  let activeStarColor = "text-[#111111]";
+  if (rating >= 4) {
+    activeStarColor = "text-emerald-600";
+  } else if (rating === 3) {
+    activeStarColor = "text-amber-500";
+  } else if (rating <= 2) {
+    activeStarColor = "text-rose-500";
+  }
+
   for (let i = 1; i <= 5; i++) {
     stars.push(
       <span
         key={i}
         className={`${starSizeClass} ${
-          i <= rating ? "text-[#111111]" : "text-[#D4D4D4]"
+          i <= rating ? activeStarColor : "text-[#E5E5E5]"
         }`}
       >
         ★
@@ -82,11 +100,7 @@ export default function ProductReviews({ productId, user }) {
         
         {/* ── SECTION HEADER ── */}
         <div className="flex flex-col gap-2 mb-6">
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] sm:text-[10px] font-bold tracking-[0.25em] text-[#747878] uppercase">
-              REVIEWS & FEEDBACK // ARCHIVE
-            </span>
-          </div>
+
 
           <div className="flex items-center gap-3">
             <StarRating rating={5} size="lg" />
@@ -128,7 +142,13 @@ export default function ProductReviews({ productId, user }) {
                       whileInView={{ width: `${item.percentage}%` }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.8, ease: "easeOut" }}
-                      className="h-full bg-[#111111] rounded-full"
+                      className={`h-full rounded-full ${
+                        item.stars >= 4
+                          ? "bg-emerald-600"
+                          : item.stars === 3
+                          ? "bg-amber-500"
+                          : "bg-rose-500"
+                      }`}
                     />
                   </div>
 
@@ -197,7 +217,13 @@ export default function ProductReviews({ productId, user }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.5, delay: index * 0.08, ease: "easeOut" }}
-              className="bg-white p-5 sm:p-6 rounded-2xl border border-black/10 hover:border-black/30 hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-4"
+              className={`bg-white p-5 sm:p-6 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-4 ${
+                rev.rating >= 4
+                  ? "border-emerald-600/10 hover:border-emerald-600/30 hover:shadow-md hover:shadow-emerald-600/5"
+                  : rev.rating === 3
+                  ? "border-amber-500/10 hover:border-amber-500/30 hover:shadow-md hover:shadow-amber-500/5"
+                  : "border-rose-500/10 hover:border-rose-500/30 hover:shadow-md hover:shadow-rose-500/5"
+              }`}
             >
               <div className="flex flex-col gap-2.5">
                 {/* Card Top: Stars & Date */}
@@ -234,7 +260,13 @@ export default function ProductReviews({ productId, user }) {
                 </span>
 
                 {rev.verified && (
-                  <span className="inline-flex items-center gap-1 bg-[#111111] text-white text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-sm">
+                  <span className={`inline-flex items-center gap-1 text-white text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-sm ${
+                    rev.rating >= 4
+                      ? "bg-emerald-700"
+                      : rev.rating === 3
+                      ? "bg-amber-600"
+                      : "bg-rose-600"
+                  }`}>
                     <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>

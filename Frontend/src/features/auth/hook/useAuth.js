@@ -26,16 +26,11 @@ export const useAuth = () => {
         }
     }
 
-    async function handleLogin({ email, password, role }) {
+    async function handleLogin({ email, password }) {
         try {
             dispatch(setloading(true));
             dispatch(setError(null));
             const data = await login({ email, password });
-            if (role && data.user.role !== role) {
-                const message = `Access denied. This account is registered as a ${data.user.role}, not a ${role}.`;
-                dispatch(setError(message));
-                return { success: false, message , user:data.user};
-            }
             dispatch(setUser(data.user));
             return { success: true, user: data.user };
         } catch (err) {

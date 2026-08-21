@@ -11,9 +11,7 @@ export default function Register() {
   const [formData, setFormData] = useState({
     fullname: "",
     email: "",
-    contactNumber: "",
     password: "",
-    isSeller: false,
   });
   const [validationError, setValidationError] = useState("");
 
@@ -37,9 +35,8 @@ export default function Register() {
 
     const result = await handleRegister({
       email: formData.email,
-      contact: formData.contactNumber,
       password: formData.password,
-      isSeller: formData.isSeller,
+      isSeller: false,
       fullname: formData.fullname,
     });
     if (result.success) {
@@ -143,24 +140,7 @@ export default function Register() {
               />
             </div>
 
-            {/* Phone */}
-            <div className="reg-field">
-              <label htmlFor="contactNumber" className="reg-label">Phone Number</label>
-              <div className="reg-phone-row">
-                <span className="reg-prefix">+91</span>
-                <input
-                  id="contactNumber"
-                  name="contactNumber"
-                  type="tel"
-                  placeholder="98765 43210"
-                  required
-                  value={formData.contactNumber}
-                  onChange={handleChange}
-                  className="velora-input reg-input"
-                  style={{ flex: 1 }}
-                />
-              </div>
-            </div>
+
 
             {/* Password */}
             <div className="reg-field">
@@ -183,32 +163,6 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Role Selection */}
-            <div className="reg-field">
-              <label className="reg-label">Register As</label>
-              <div className="flex gap-6 mt-2 pb-2" style={{ borderBottom: "1px solid #c4c7c7" }}>
-                <label className="flex items-center gap-2 text-sm text-[#1a1a1a] cursor-pointer">
-                  <input
-                    type="radio"
-                    name="isSeller"
-                    checked={!formData.isSeller}
-                    onChange={() => setFormData(p => ({ ...p, isSeller: false }))}
-                    className="accent-[#f59e0b] w-4 h-4 cursor-pointer"
-                  />
-                  <span className="font-medium text-[13px] tracking-wide uppercase">Buyer</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm text-[#1a1a1a] cursor-pointer">
-                  <input
-                    type="radio"
-                    name="isSeller"
-                    checked={formData.isSeller}
-                    onChange={() => setFormData(p => ({ ...p, isSeller: true }))}
-                    className="accent-[#f59e0b] w-4 h-4 cursor-pointer"
-                  />
-                  <span className="font-medium text-[13px] tracking-wide uppercase">Seller</span>
-                </label>
-              </div>
-            </div>
 
             {/* Sign Up */}
             <motion.button

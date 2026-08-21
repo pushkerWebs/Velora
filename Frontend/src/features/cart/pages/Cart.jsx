@@ -364,11 +364,7 @@ const Cart = () => {
             </AnimatePresence>
             {/* ── Page Header ── */}
             <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 lg:px-12 pt-20 sm:pt-24 pb-3">
-                <nav className="flex items-center gap-2 text-[9px] sm:text-[10px] font-semibold text-[#747878] uppercase tracking-[0.16em] mb-3 sm:mb-4">
-                    <Link to="/" className="hover:text-black transition-colors">HOME</Link>
-                    <span>/</span>
-                    <span className="text-black font-bold">SHOPPING BAG</span>
-                </nav>
+
                 <div className="flex items-baseline justify-between border-b border-[#E5E5E5] pb-3 sm:pb-4">
                     <h1
                         style={{ fontFamily: "'Montserrat', sans-serif" }}

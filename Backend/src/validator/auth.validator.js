@@ -34,8 +34,11 @@ export const validateRegisterUser = [
 ];
 
 export const validateLoginUser = [
-  body("email").isEmail().withMessage("Invalid email format"),
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Invalid email format"),
   body("password").notEmpty().withMessage("Password is required"),
   validateRequest
 ];
-
