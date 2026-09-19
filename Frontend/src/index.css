@@ -2,7 +2,8 @@
 @import "tailwindcss";
 
 /* ─── Lenis Smooth Scroll ─── */
-html.lenis, html.lenis body {
+html.lenis,
+html.lenis body {
   height: auto;
 }
 
@@ -10,7 +11,8 @@ html.lenis, html.lenis body {
   scroll-behavior: auto !important;
 }
 
-.lenis.lenis-smooth [data-lenis-prevent] {
+.lenis.lenis-smooth [data-lenis-prevent],
+.lenis [data-lenis-prevent] {
   overscroll-behavior: contain;
 }
 
@@ -18,8 +20,15 @@ html.lenis, html.lenis body {
   overflow: hidden;
 }
 
-.lenis.lenis-smooth iframe {
+.lenis.lenis-scrolling iframe {
   pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.lenis,
+  html.lenis body {
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ─── GPU Acceleration & Rendering Utilities ─── */

@@ -104,46 +104,84 @@ export default function Navbar({ user: userProp }) {
     }
   }, [searchOpen]);
 
+  const isVisibleRef = useRef(true);
+  const isScrolledPastHeroRef = useRef(false);
+
   // Reset navbar visible on route navigation
   useEffect(() => {
     setVisible(true);
+    isVisibleRef.current = true;
     lastScrollY.current = window.scrollY;
   }, [location.pathname]);
 
   useEffect(() => {
     lastScrollY.current = window.scrollY;
 
-    const updateScroll = () => {
-      const currentScrollY = window.scrollY;
-      const prevScrollY = lastScrollY.current;
-      const scrollDiff = currentScrollY - prevScrollY;
+    const updateVisibility = (newVisible, newPastHero) => {
+      if (newVisible !== isVisibleRef.current) {
+        isVisibleRef.current = newVisible;
+        setVisible(newVisible);
+      }
+      if (newPastHero !== isScrolledPastHeroRef.current) {
+        isScrolledPastHeroRef.current = newPastHero;
+        setScrolledPastHero(newPastHero);
+      }
+    };
 
-      // Always visible near top of page
-      if (currentScrollY <= 15) {
-        setVisible(true);
-        setScrolledPastHero(false);
+    // Velocity-based scroll handler for Lenis
+    const handleLenisScroll = (e) => {
+      const scroll = e.scroll ?? window.scrollY;
+      const velocity = e.velocity ?? 0;
+      const direction = e.direction ?? (velocity > 0 ? 1 : -1);
+
+      if (scroll <= 15) {
+        updateVisibility(true, false);
       } else {
-        if (currentScrollY > 70) {
-          setScrolledPastHero(true);
-        } else {
-          setScrolledPastHero(false);
-        }
-
-        // 10px scroll direction threshold to prevent jittering
-        if (scrollDiff > 10) {
-          setVisible(false);
-        } else if (scrollDiff < -10) {
-          setVisible(true);
+        const pastHero = scroll > 70;
+        // Velocity-based response: hide smoothly on downward velocity, reveal on upward velocity
+        if (direction === 1 && (velocity > 0.08 || scroll - lastScrollY.current > 10)) {
+          updateVisibility(false, pastHero);
+        } else if (direction === -1 && (velocity < -0.08 || scroll - lastScrollY.current < -10)) {
+          updateVisibility(true, pastHero);
+        } else if (pastHero !== isScrolledPastHeroRef.current) {
+          updateVisibility(isVisibleRef.current, pastHero);
         }
       }
+      lastScrollY.current = scroll;
+    };
 
+    const lenis = window.__lenis;
+    if (lenis && typeof lenis.on === "function") {
+      lenis.on("scroll", handleLenisScroll);
+      return () => {
+        lenis.off("scroll", handleLenisScroll);
+      };
+    }
+
+    // Fallback if Lenis is not yet mounted
+    const updateNativeScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDiff = currentScrollY - lastScrollY.current;
+
+      if (currentScrollY <= 15) {
+        updateVisibility(true, false);
+      } else {
+        const pastHero = currentScrollY > 70;
+        if (scrollDiff > 10) {
+          updateVisibility(false, pastHero);
+        } else if (scrollDiff < -10) {
+          updateVisibility(true, pastHero);
+        } else if (pastHero !== isScrolledPastHeroRef.current) {
+          updateVisibility(isVisibleRef.current, pastHero);
+        }
+      }
       lastScrollY.current = currentScrollY;
       ticking.current = false;
     };
 
     const onScroll = () => {
       if (!ticking.current) {
-        window.requestAnimationFrame(updateScroll);
+        window.requestAnimationFrame(updateNativeScroll);
         ticking.current = true;
       }
     };
@@ -385,7 +423,7 @@ export default function Navbar({ user: userProp }) {
             onClick={() => setMobileOpen(false)}
           />
           {/* Panel */}
-          <div className="relative ml-auto w-[280px] h-full bg-white flex flex-col p-8 shadow-2xl">
+          <div data-lenis-prevent="true" className="relative ml-auto w-[280px] h-full bg-white flex flex-col p-8 shadow-2xl overflow-y-auto">
             <button
               onClick={() => setMobileOpen(false)}
               className="absolute top-5 right-5 text-[#111]"

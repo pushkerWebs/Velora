@@ -448,7 +448,7 @@ const Cart = () => {
                         {/* ── Left Column: Cart Items (70% Desktop / lg:col-span-8) ── */}
                         <div className="lg:col-span-8 flex flex-col gap-4 sm:gap-6">
 
-                            {/* Compact Cart Item Cards (Scrollable with Lenis override ONLY when > 3 items) */}
+                            {/* Compact Cart Item Cards (Scrollable with Lenis nested scroll override when > 3 items) */}
                             <div
                                 {...(cartItems.length >= 4 ? { 'data-lenis-prevent': 'true' } : {})}
                                 className={`flex flex-col gap-3.5 sm:gap-4 ${cartItems.length >= 4 ? 'max-h-[520px] sm:max-h-[580px] overflow-y-auto pr-1.5 sm:pr-2.5 custom-scrollbar' : ''}`}

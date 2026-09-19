@@ -36,13 +36,13 @@ const gridContainerVariants = {
   },
 };
 
-// Product Card Variants (opacity: 0, y: 40 -> opacity: 1, y: 0)
+// Product Card Variants (subtle editorial reveal: opacity 0->1, y: 24->0)
 const cardVariants = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 24 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] },
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
   },
 };
 

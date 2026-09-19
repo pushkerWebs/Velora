@@ -198,7 +198,7 @@ export default function ProductGrid() {
       <section className="relative w-full h-[380px] xs:h-[440px] sm:h-[60vh] lg:h-[85vh] xl:h-[90vh] lg:max-h-[800px] flex items-center justify-center overflow-hidden mb-4">
         <div className="absolute inset-0 z-0 bg-[#0d0d0d]">
           <img
-            src="/velora-catalogue-hero.png"
+            src="/velora-catalogue-hero.webp"
             alt="The Full Collection Hero - Grayscale Long Sleeve Model"
             className="w-full h-full object-cover object-center lg:object-[center_28%] opacity-50"
           />

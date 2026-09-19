@@ -1,78 +1,56 @@
-import React, { useEffect, useRef } from "react";
+import React, { createContext, useContext, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router";
 import Lenis from "lenis";
 import Navbar from "../features/products/components/Navbar.jsx";
+
+export const LenisContext = createContext(null);
+export const useLenis = () => useContext(LenisContext);
 
 export default function SmoothScroll() {
   const lenisRef = useRef(null);
   const location = useLocation();
 
   useEffect(() => {
-    // Initialize Lenis smooth scroll with enhanced gliding latency (silky luxury style)
+    // Check user preference for reduced motion
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Initialize modern Lenis with tuned momentum parameters
     const lenis = new Lenis({
-      duration: 1.6, // Longer duration for a more noticeable smooth glide
-      easing: (t) => 1 - Math.pow(1 - t, 5), // Quintic ease-out for ultra smooth deceleration
-      orientation: "vertical",
-      gestureOrientation: "vertical",
-      smoothWheel: true,
-      wheelMultiplier: 1.3, // Stronger scroll wheel glide
-      touchMultiplier: 1.5, // Silkier trackpad/touch momentum
-      infinite: false,
+      autoRaf: true,
+      anchors: true,
+      smoothWheel: !prefersReducedMotion,
+      lerp: 0.085,             // Silky, responsive interpolation (no floaty delay)
+      wheelMultiplier: 0.9,     // Controlled, elegant momentum
+      touchMultiplier: 1.0,     // 1:1 touch ratio
+      syncTouch: false,         // Never hijack native mobile/trackpad gestures
+      autoResize: true,
+      stopInertiaOnNavigate: true,
+      respectReducedMotion: true,
     });
 
     lenisRef.current = lenis;
     window.__lenis = lenis;
 
-    let rafId;
-    function raf(time) {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
-    }
-    rafId = requestAnimationFrame(raf);
-
-    // Delegate smooth scrolling for all anchor links (#shop, #details, etc.)
-    const handleAnchorClick = (e) => {
-      const anchor = e.target.closest("a");
-      if (!anchor) return;
-      const href = anchor.getAttribute("href");
-      if (href && href.startsWith("#") && href.length > 1) {
-        const targetElement = document.querySelector(href);
-        if (targetElement) {
-          e.preventDefault();
-          lenis.scrollTo(targetElement, { offset: 0, duration: 1.2 });
-        }
-      }
-    };
-
-    document.addEventListener("click", handleAnchorClick);
-
     return () => {
-      cancelAnimationFrame(rafId);
-      document.removeEventListener("click", handleAnchorClick);
       lenis.destroy();
       lenisRef.current = null;
+      window.__lenis = null;
     };
   }, []);
 
-  // Scroll to top and recalculate dimensions on page route navigation
+  // Instant scroll-to-top on route navigation without animation drift
   useEffect(() => {
     if (lenisRef.current) {
       if (!location.hash) {
         lenisRef.current.scrollTo(0, { immediate: true });
       }
-      // Re-sync Lenis scroll height tracking as content renders
-      lenisRef.current.resize();
-      const timer = setTimeout(() => {
-        lenisRef.current?.resize();
-      }, 200);
-      return () => clearTimeout(timer);
     }
   }, [location.pathname]);
 
   return (
-    <>
+    <LenisContext.Provider value={lenisRef}>
       <Navbar />
       <Outlet />
-    </>
+    </LenisContext.Provider>
   );
 }

@@ -48,7 +48,7 @@ const CONFIG = {
     label: "LUXURY TAILORING 2026",
     heading: "THE ART OF THE SHIRT",
     tagline: "Impeccable cuts. Premium linen & Egyptian cotton. Crafted for elegance.",
-    heroBg: "/shirt-page-banner.png",
+    heroBg: "/shirt-page-banner.webp",
     chips: ["All", "Linen", "Stripped", "Half-Sleeve", "Full Sleeve"],
     promoBannerTitle: "THE VELORA SHIRT EDIT",
     promoBannerSub: "The shirt, perfected for the modern professional.",
@@ -91,11 +91,12 @@ export default function CategoryPage({ category }) {
   const navigate = useNavigate();
   const { handleGetAllProducts } = useProduct();
   const { toggleWishlist, isWishlisted } = useWishlist();
-  const allProducts = useSelector((state) => state.product?.products || []);
   const user = useSelector((state) => state.auth.user);
 
   const [loading, setLoading] = useState(true);
   const [activeChip, setActiveChip] = useState("All");
+  // Local product state to prevent stale Redux data from flashing between category switches
+  const [categoryProducts, setCategoryProducts] = useState([]);
 
   const cfg = CONFIG[category] || CONFIG["Jeans"];
 
@@ -109,11 +110,15 @@ export default function CategoryPage({ category }) {
     const fetchCategoryProducts = async () => {
       try {
         setLoading(true);
+        setCategoryProducts([]); // Clear immediately to prevent stale data flash
         const params = { category };
         if (activeChip !== "All") {
           params.search = activeChip;
         }
-        await handleGetAllProducts(params, { signal: controller.signal });
+        const products = await handleGetAllProducts(params, { signal: controller.signal });
+        if (!controller.signal.aborted && Array.isArray(products)) {
+          setCategoryProducts(products);
+        }
       } catch (e) {
         if (e.name !== 'CanceledError' && e.code !== 'ERR_CANCELED') {
           console.error("Failed to load category products:", e);
@@ -131,7 +136,6 @@ export default function CategoryPage({ category }) {
     };
   }, [category, activeChip]);
 
-  const categoryProducts = allProducts;
   const goTo = (id) => navigate(`/product/${id}`);
 
   const editorPicks = categoryProducts.slice(0, 3);
@@ -149,10 +153,10 @@ export default function CategoryPage({ category }) {
             <img
               src={
                 category === "Jeans"
-                  ? "/newjeanspagebanner.png"
+                  ? "/newjeanspagebanner.webp"
                   : category === "T-Shirts"
-                  ? "/tshirt-bannner.png"
-                  : "/shirt-page-banner.png"
+                  ? "/tshirt-bannner.webp"
+                  : "/shirt-page-banner.webp"
               }
               alt={cfg.heading}
               className={`absolute inset-0 w-full h-full object-cover ${

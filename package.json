@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@dietrichgebert/ponytail": "^4.10.0",
     "@imagekit/nodejs": "^7.10.0"
   }
 }

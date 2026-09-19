@@ -199,6 +199,54 @@ function buildProductSearchQuery(rawSearch, rawCategory) {
     return { $and: queryConditions };
 }
 
+/**
+ * Post-query safety filter: removes products whose title clearly belongs
+ * to a different category than what was requested.
+ * Uses word-boundary regex to avoid false positives (e.g. "Jean-Paul" is fine).
+ */
+function filterMisclassifiedProducts(products, requestedCategory) {
+    if (!requestedCategory || requestedCategory === "All" || !products.length) {
+        return products;
+    }
+
+    const cat = requestedCategory.trim();
+
+    if (cat === "T-Shirts") {
+        // Exclude products whose title screams "jeans" but aren't categorized as T-Shirts by title
+        const jeansPattern = /\bjeans?\b/i;
+        const tshirtPattern = /\b(t[- ]?shirts?|tshirts?|tee[- ]?shirts?|tees?)\b/i;
+        return products.filter((p) => {
+            const title = p.title || "";
+            // If title contains "jeans" and does NOT contain "t-shirt", it's misclassified
+            if (jeansPattern.test(title) && !tshirtPattern.test(title)) return false;
+            return true;
+        });
+    }
+
+    if (cat === "Jeans") {
+        const shirtPattern = /\b(t[- ]?shirts?|tshirts?|shirts?)\b/i;
+        const jeansPattern = /\bjeans?\b/i;
+        return products.filter((p) => {
+            const title = p.title || "";
+            if (shirtPattern.test(title) && !jeansPattern.test(title)) return false;
+            return true;
+        });
+    }
+
+    if (cat === "Shirts") {
+        const jeansPattern = /\bjeans?\b/i;
+        const tshirtPattern = /\b(t[- ]?shirts?|tshirts?|tee[- ]?shirts?|tees?)\b/i;
+        return products.filter((p) => {
+            const title = p.title || "";
+            if (jeansPattern.test(title) && !(/\bshirts?\b/i).test(title)) return false;
+            if (tshirtPattern.test(title)) return false;
+            return true;
+        });
+    }
+
+    return products;
+}
+
 function rankProductsByRelevance(products, rawSearch) {
     if (!rawSearch || typeof rawSearch !== "string" || !rawSearch.trim()) {
         return products;
@@ -254,7 +302,9 @@ export async function getAllProducts(req, res) {
             .populate("seller", "name email")
             .sort({ createdAt: -1 });
 
-        const rankedProducts = rankProductsByRelevance(products || [], search);
+        // Safety net: remove products whose title clearly contradicts the requested category
+        const filteredProducts = filterMisclassifiedProducts(products || [], category);
+        const rankedProducts = rankProductsByRelevance(filteredProducts, search);
 
         res.status(200).json({
             message: "Products fetched successfully",

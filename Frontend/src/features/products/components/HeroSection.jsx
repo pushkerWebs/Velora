@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { motion } from "framer-motion";
 
@@ -8,9 +8,44 @@ const FALLBACK_IMG = "https://i.pinimg.com/originals/bd/f7/31/bdf73126df5cfcc5b5
 
 export default function HeroSection() {
   const [activeCta, setActiveCta] = React.useState("shop"); // 'shop' | 'explore'
+  const imageRef = useRef(null);
+  const textRef = useRef(null);
+  const contentRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = (e) => {
+      const scroll = typeof e?.scroll === "number" ? e.scroll : window.scrollY;
+      const vh = window.innerHeight || 800;
+
+      if (scroll > vh * 1.2) return;
+
+      const imageOffset = scroll * 0.12; // 0.12x subtle image parallax
+      const textOffset = scroll * 0.05;  // 0.05x subtle background text parallax
+      const exitFade = Math.max(0, 1 - scroll / (vh * 0.85));
+
+      if (imageRef.current) {
+        imageRef.current.style.transform = `translate3d(0, ${imageOffset}px, 0)`;
+      }
+      if (textRef.current) {
+        textRef.current.style.transform = `translate3d(0, ${textOffset}px, 0)`;
+      }
+      if (contentRef.current) {
+        contentRef.current.style.opacity = `${exitFade}`;
+      }
+    };
+
+    const lenis = window.__lenis;
+    if (lenis && typeof lenis.on === "function") {
+      lenis.on("scroll", handleScroll);
+      return () => lenis.off("scroll", handleScroll);
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <section className="relative w-full h-screen min-h-[600px] max-h-[1080px] overflow-hidden bg-white flex items-center justify-center select-none">
+    <section ref={contentRef} className="relative w-full h-screen min-h-[600px] max-h-[1080px] overflow-hidden bg-white flex items-center justify-center select-none transition-opacity duration-150">
 
       {/* ── VELORA background editorial text (Behind image - z-0) ── */}
       <motion.div
@@ -21,6 +56,7 @@ export default function HeroSection() {
         className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden z-0 gpu-accelerated -translate-y-24 sm:translate-y-0"
       >
         <span
+          ref={textRef}
           style={{
             fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
             fontSize: "clamp(80px, 18vw, 250px)",
@@ -29,6 +65,7 @@ export default function HeroSection() {
             letterSpacing: "0.06em",
             color: "rgba(120, 120, 120, 0.45)",
             whiteSpace: "nowrap",
+            willChange: "transform",
           }}
         >
           VELORA
@@ -43,10 +80,11 @@ export default function HeroSection() {
         className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none select-none z-10 gpu-accelerated"
       >
         <img
+          ref={imageRef}
           src={HERO_IMG}
           alt="VELORA Editorial Collection"
           draggable={false}
-          className="w-auto h-[88vh] max-h-[840px] object-contain object-bottom mx-auto pointer-events-none select-none -translate-y-16 sm:translate-y-8"
+          className="w-auto h-[88vh] max-h-[840px] object-contain object-bottom mx-auto pointer-events-none select-none -translate-y-16 sm:translate-y-8 will-change-transform"
           fetchPriority="high"
           loading="eager"
           decoding="async"
